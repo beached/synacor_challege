@@ -265,12 +265,20 @@ uint16_t & get_value( uint16_t & i ) {
 }
 
 uint16_t pop_istack( ) {
+	if( inst_stack.empty( ) ) {
+		std::cerr << "INSTRUCTION STACK UNDERFLOW" << std::endl;
+		exit( EXIT_FAILURE );
+	}
 	auto result = *inst_stack.rbegin( );
 	inst_stack.pop_back( );
 	return result;
 }
 
 uint16_t pop_stack( ) {
+	if( stack.empty( ) ) {
+		std::cerr << "STACK UNDERFLOW" << std::endl;
+		exit( EXIT_FAILURE );
+	}
 	auto result = *stack.rbegin( );
 	stack.pop_back( );
 	return result;
@@ -302,10 +310,6 @@ namespace instructions {
 	}
 
 	void inst_pop( ) {
-		if( stack.empty( ) ) {
-			std::cerr << "STACK UNDERFLOW" << std::endl;
-			exit( EXIT_FAILURE );
-		}
 		auto a = pop_istack( );
 		get_mem_or_reg( a ) = pop_stack( );
 	}
