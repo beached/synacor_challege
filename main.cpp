@@ -239,14 +239,17 @@ public:
 
 	unsigned char get( ) {
 		if( pos == cur_line.end( ) ) {
+			if( has_read ) {
+				has_read = false;
+				return '\n';
+			}
 			if( !std::getline( std::cin, cur_line ) ) {
 				std::cerr << "ERRROR ATTEMPTING TO READ INPUT" << std::endl;
 				exit( EXIT_FAILURE );
 			}
+			has_read = true;
 			pos = cur_line.begin( );
-			if( has_read ) {				
-				return '\n';
-			} else if( pos == cur_line.end( ) ) {
+			if( pos == cur_line.end( ) ) {
 				std::cerr << "ERRROR ATTEMPTING TO READ INPUT" << std::endl;
 				exit( EXIT_FAILURE );
 			}
@@ -473,7 +476,10 @@ namespace instructions {
 
 	void inst_in( ) {
 		auto a = pop_istack( );
-		get_reg_or_mem( a ) = term_buff.get( );
+
+		auto tmp = term_buff.get( );
+
+		get_reg_or_mem( a ) = static_cast<uint16_t>(tmp);
 	}
 
 	void inst_noop( ) {
