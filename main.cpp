@@ -27,6 +27,7 @@
 #include <boost/utility/string_ref.hpp>
 #include <iostream>
 #include <cstdint>
+#include <string>
 #include <iterator>
 
 template<typename Iterator>
@@ -146,7 +147,7 @@ struct container_conversion {
 };	// struct container_conversion
 
 struct virtual_memory_t {
-	using array_t = std::array<uint16_t, 65536>;
+	using array_t = std::array<uint16_t, 32768>;
 	using iterator = typename array_t::iterator;
 	using const_iterator = typename array_t::const_iterator;
 	using value_type = typename array_t::value_type;
@@ -209,20 +210,58 @@ public:
 		return m_memory.size( );
 	}
 
-	reference operator[]( size_t pos ) {
-		return m_memory.at( pos );
+	reference operator[]( uint16_t pos ) {
+		assert( pos < m_memory.size( ) );
+		return m_memory[pos];
 	}
 
 	const_reference operator[]( size_t pos ) const {
-		return m_memory.at( pos );
+		assert( pos < m_memory.size( ) );
+		return m_memory[pos];
 	}
 };	// struct virtual_memory
 
+class term_buff_t {
+	std::string cur_line;
+	std::string::iterator pos;
+	bool has_read;
+public:
+	term_buff_t( ):
+		cur_line( ),
+		pos( cur_line.end( ) ),
+		has_read( false ) { }
+
+	~term_buff_t( ) = default;
+	term_buff_t( term_buff_t const & ) = delete;
+	term_buff_t( term_buff_t && ) = default;
+	term_buff_t & operator=( term_buff_t const & ) = delete;
+	term_buff_t & operator=( term_buff_t && ) = default;
+
+	unsigned char get( ) {
+		if( pos == cur_line.end( ) ) {
+			if( !std::getline( std::cin, cur_line ) ) {
+				std::cerr << "ERRROR ATTEMPTING TO READ INPUT" << std::endl;
+				exit( EXIT_FAILURE );
+			}
+			pos = cur_line.begin( );
+			if( has_read ) {				
+				return '\n';
+			} else if( pos == cur_line.end( ) ) {
+				std::cerr << "ERRROR ATTEMPTING TO READ INPUT" << std::endl;
+				exit( EXIT_FAILURE );
+			}
+		}
+		auto result = *pos;
+		++pos;
+		return result;
+	}
+};	// class term_buff_t
 
 namespace {
 	std::array<uint16_t, 8> registers;
 	std::vector<uint16_t> inst_stack;
 	std::vector<uint16_t> stack;
+	term_buff_t term_buff;
 	virtual_memory_t memory;
 	const uint16_t MODULO = 32768;
 
@@ -435,8 +474,7 @@ namespace instructions {
 	void inst_in( ) {
 		auto a = pop_istack( );
 		unsigned char tmp = 0;
-		std::cin >> tmp;
-		get_reg_or_mem( a ) = tmp;		
+		get_reg_or_mem( a ) = term_buff.get( );
 	}
 
 	void inst_noop( ) {
