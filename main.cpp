@@ -468,7 +468,7 @@ namespace instructions {
 			{ 2, inst_not },	// 14
 			{ 2, inst_rmem },	// 15
 			{ 2, inst_wmem },	// 16
-			{ 1, inst_call },	// 17
+			{ 2, inst_call },	// 17
 			{ 0, inst_ret },	// 18
 			{ 1, inst_out },	// 19
 			{ 1, inst_in },		// 20
