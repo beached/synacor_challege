@@ -41,7 +41,7 @@ struct virtual_machine_t {
 	static uint16_t const MODULO = 32768;
 	static uint16_t const REGISTER0 = 32768;
 
-	uint16_t & get_register( uint16_t i );
+	uint16_t & get_register( uint16_t i, bool log7 = true );
 	static bool is_value( uint16_t i );
 	static bool is_register( uint16_t i );
 	static void validate( uint16_t i ); 
@@ -93,10 +93,6 @@ namespace instructions {
 
 bool is_alphanum( uint16_t i );
 
-namespace impl {
-	std::string mem_to_str( uint16_t i );
-}
-
 template<typename Decoder>
 std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	std::stringstream ss;
@@ -110,6 +106,19 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 		return vm.memory[addr++];
 	};
 
+	auto mem_to_str = [&]( auto i ) {
+		if( virtual_machine_t::is_register( i ) ) {
+			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i, false ) << ")";
+		} else if( i < virtual_machine_t::REGISTER0 ) {
+			ss << static_cast<int>(i);
+			if( is_alphanum( i ) ) {
+				ss << "'" << static_cast<unsigned char>(i) << "'";
+			}
+		} else {
+			ss << "INVALID(" << static_cast<int>(i) << ")";
+		}
+	};
+
 	for( size_t addr = 0; addr < vm.memory.size( ); ++addr ) {
 		ss << addr << ": ";
 		auto const val = get_mem( addr );
@@ -117,10 +126,11 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 			auto d = decoder( val );
 			ss << d.name;
 			for( size_t n = 0; n < d.arg_count; ++n ) {
-				ss << "  " << impl::mem_to_str( get_mem( addr ) );
+				ss << "  ";
+				mem_to_str( get_mem( addr ) );
 			}
 		} else {
-			ss << impl::mem_to_str( val );
+			mem_to_str( val );
 		}
 		--addr;
 		ss << "\n";

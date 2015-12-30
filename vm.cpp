@@ -27,12 +27,12 @@
 #include <vector>
 #include "vm.h"
 
-uint16_t & virtual_machine_t::get_register( uint16_t i ) {
+uint16_t & virtual_machine_t::get_register( uint16_t i, bool log7 ) {
 	if( !is_register( i ) ) {
 		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;
 		exit( EXIT_FAILURE );
 	}
-	if( i - REGISTER0 == 7 ) {
+	if( log7 && i - REGISTER0 == 7 ) {
 		std::cout << "Someone is peaking" << std::endl;
 	}
 	return registers[i - REGISTER0];
@@ -304,18 +304,3 @@ bool is_alphanum( uint16_t i ) {
 	return 32 <= i && i < 127;
 }
 
-std::string impl::mem_to_str(uint16_t const i ) {
-	std::stringstream ss;
-	if( virtual_machine_t::is_register( i ) ) {
-		ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0);
-	} else if( i < virtual_machine_t::REGISTER0 ) {
-		ss << static_cast<int>(i);
-		if( is_alphanum( i ) ) {
-			ss << "'" << static_cast<unsigned char>(i) << "'";
-		}
-	} else {
-		ss << "INVALID(" << static_cast<int>(i) << ")";
-	}
-	return ss.str( );
-
-}
