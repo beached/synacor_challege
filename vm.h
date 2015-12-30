@@ -93,25 +93,24 @@ namespace instructions {
 
 bool is_alphanum( uint16_t i );
 
+namespace impl {
+	std::string mem_to_str( uint16_t i );
+}
+
 template<typename Decoder>
-std::string dump_memory( virtual_machine_t const & vm, Decoder decoder ) {
+std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	std::stringstream ss;
 	for( size_t addr = 0; addr < vm.memory.size( ); ++addr ) {
 		auto const val = vm.memory[addr];
 		ss << addr << ":";
 		if( instructions::is_instruction( val ) ) {
 			auto d = decoder( val );
-			ss << "INSTRUCTION," << d.name << "," << d.arg_count;
-		} else if( vm.is_register( val ) ) {
-			ss << "REGISTER," << static_cast<int>(val - vm.REGISTER0);
-		} else if( vm.is_value( val ) ) {
-			if( is_alphanum( val ) ) {
-				ss << "ASCII," << val << "," << static_cast<char>(val);
-			} else {
-				ss << "VALUE," << val;
+			ss << d.name;
+			for( size_t n = 0; n < d.arg_count; ++n ) {
+				ss << " " << impl::mem_to_str( vm.fetch_opcode( ) );
 			}
 		} else {
-			ss << "INVALID";
+			ss << impl::mem_to_str( val );
 		}
 		ss << "\n";
 	}

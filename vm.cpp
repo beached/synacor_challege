@@ -305,3 +305,18 @@ bool is_alphanum( uint16_t i ) {
 	return 32 <= c && c < 127;
 }
 
+std::string impl::mem_to_str(uint16_t i ) {
+	std::stringstream ss;
+	if( virtual_machine_t::is_register( i ) ) {
+		ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0);
+	} else if( i < virtual_machine_t::REGISTER0 ) {
+		ss << static_cast<int>(i);
+		if( is_alphanum( i ) ) {
+			ss << "'" << static_cast<char>(i) << "'";
+		}
+	} else {
+		ss << "INVALID_" << static_cast<int>(i);
+	}
+	return ss.str( );
+
+}
