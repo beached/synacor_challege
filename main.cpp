@@ -444,31 +444,32 @@ namespace instructions {
 			instruction( i ) { }
 	};
 
-	decoded_inst_t decoder[22] = {
-		{ 0, inst_halt },	// 0
-		{ 2, inst_set },	// 1
-		{ 1, inst_push },	// 2
-		{ 1, inst_pop },	// 3
-		{ 3, inst_eq },		// 4 
-		{ 3, inst_gt },		// 5
-		{ 1, inst_jmp },	// 6
-		{ 2, inst_jt },		// 7
-		{ 2, inst_jf },		// 8
-		{ 3, inst_add },	// 9
-		{ 3, inst_mult },	// 10
-		{ 3, inst_mod },	// 11
-		{ 3, inst_and },	// 12
-		{ 3, inst_or },		// 13
-		{ 2, inst_not },	// 14
-		{ 2, inst_rmem },	// 15
-		{ 2, inst_wmem },	// 16
-		{ 1, inst_call },	// 17
-		{ 0, inst_ret },	// 18
-		{ 1, inst_out },	// 19
-		{ 1, inst_in },		// 20
-		{ 0, inst_noop }	// 21
-	};
-
+	namespace {
+		decoded_inst_t decoder[22] = {
+			{ 0, inst_halt },	// 0
+			{ 2, inst_set },	// 1
+			{ 1, inst_push },	// 2
+			{ 1, inst_pop },	// 3
+			{ 3, inst_eq },		// 4 
+			{ 3, inst_gt },		// 5
+			{ 1, inst_jmp },	// 6
+			{ 2, inst_jt },		// 7
+			{ 2, inst_jf },		// 8
+			{ 3, inst_add },	// 9
+			{ 3, inst_mult },	// 10
+			{ 3, inst_mod },	// 11
+			{ 3, inst_and },	// 12
+			{ 3, inst_or },		// 13
+			{ 2, inst_not },	// 14
+			{ 2, inst_rmem },	// 15
+			{ 2, inst_wmem },	// 16
+			{ 1, inst_call },	// 17
+			{ 0, inst_ret },	// 18
+			{ 1, inst_out },	// 19
+			{ 1, inst_in },		// 20
+			{ 0, inst_noop }	// 21
+		};
+	}
 }
 
 int main( int argc, char** argv ) {
