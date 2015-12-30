@@ -480,7 +480,7 @@ int main( int argc, char** argv ) {
 	instruction_ptr = 0;
 	
 	do {
-		auto const & decoded = instructions::decoder[instruction_ptr];
+		auto const & decoded = instructions::decoder[memory[instruction_ptr]];
 		++instruction_ptr;
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
 			inst_stack.push_back( instruction_ptr );
