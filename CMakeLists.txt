@@ -23,9 +23,14 @@ if(THREADS_HAVE_PTHREAD_ARG)
 	set(COMPILER_SPECIFIC_LIBS, "-lpthread" )
 endif( )
 
+set( SOURCE_FILES
+	helpers.h
+	memory_helper.h
+	main.cpp
+)
 
 include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
 
-add_executable(synacor_challenge main.cpp)
+add_executable(synacor_challenge ${SOURCE_FILES})
 target_link_libraries(synacor_challenge ${Boost_Libs} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} )
