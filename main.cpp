@@ -146,7 +146,7 @@ struct container_conversion {
 };	// struct container_conversion
 
 struct virtual_memory_t {
-	using array_t = std::array<uint16_t, 65536*3>;
+	using array_t = std::array<uint16_t, 65536>;
 	using iterator = typename array_t::iterator;
 	using const_iterator = typename array_t::const_iterator;
 	using value_type = typename array_t::value_type;
@@ -226,7 +226,7 @@ namespace {
 	virtual_memory_t memory;
 	const uint16_t MODULO = 32768;
 
-	size_t instruction_ptr;
+	uint16_t instruction_ptr;
 
 	uint16_t const REG_POS[8] = { 32768, 32769, 32770, 32771, 32772, 32773, 32774, 32775 };
 }
@@ -388,11 +388,11 @@ namespace instructions {
 	void inst_not( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-
-// 		uint16_t tmp = ~(0b1111111111111110 & b);
-// 		tmp = (0b0000000000000001 | b) | tmp;
-
-		get_reg_or_mem( a ) = 32767 - get_value( b );
+		const uint16_t MASK = 0b1000000000000000;
+		uint16_t val = get_value( b );
+		uint16_t tmp = val & MASK;
+		uint16_t tmp2 = ~val & ~MASK; 
+		get_reg_or_mem( a ) = tmp | tmp2; 
 	}
 
 	void inst_rmem( ) {
@@ -412,9 +412,8 @@ namespace instructions {
 	}
 
 	void inst_call( ) {
-		auto b = pop_istack( );
 		auto a = pop_istack( );
-		stack.push_back( b );
+		stack.push_back( instruction_ptr );
 		instruction_ptr = get_value( a );
 	}
 
@@ -468,7 +467,7 @@ namespace instructions {
 			{ 2, inst_not },	// 14
 			{ 2, inst_rmem },	// 15
 			{ 2, inst_wmem },	// 16
-			{ 2, inst_call },	// 17
+			{ 1, inst_call },	// 17
 			{ 0, inst_ret },	// 18
 			{ 1, inst_out },	// 19
 			{ 1, inst_in },		// 20
