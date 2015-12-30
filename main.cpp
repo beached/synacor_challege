@@ -218,8 +218,6 @@ public:
 	}
 };	// struct virtual_memory
 
-using instruction_ptr_t = virtual_memory_t::iterator;
-using state_fptr_t = void( );
 
 namespace {
 	std::array<uint16_t, 8> registers;
@@ -228,7 +226,7 @@ namespace {
 	virtual_memory_t memory;
 	const uint16_t MODULO = 32768;
 
-	instruction_ptr_t instruction_ptr;
+	size_t instruction_ptr;
 
 	uint16_t const REG_POS[8] = { 32768, 32769, 32770, 32771, 32772, 32773, 32774, 32775 };
 }
@@ -295,7 +293,7 @@ namespace instructions {
 	void inst_set( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );		
-		get_register( b ) = get_mem_or_reg( a );
+		get_register( a ) = b;
 	}
 
 	void inst_push( ) {
@@ -328,14 +326,14 @@ namespace instructions {
 
 	void inst_jmp( ) {
 		auto a = pop_istack( );
-		instruction_ptr = memory.begin( ) + get_mem_or_reg( a );
+		instruction_ptr = get_mem_or_reg( a );
 	}
 
 	void inst_jt( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
 		if( get_mem_or_reg( a ) != 0 ) {
-			instruction_ptr = memory.begin( ) + get_mem_or_reg( b );
+			instruction_ptr = get_mem_or_reg( b );
 		}
 	}
 
@@ -343,7 +341,7 @@ namespace instructions {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
 		if( get_mem_or_reg( a ) == 0 ) {
-			instruction_ptr = memory.begin( ) + get_mem_or_reg( b );
+			instruction_ptr = get_mem_or_reg( b );
 		}
 	}
 
@@ -410,17 +408,17 @@ namespace instructions {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
 		stack.push_back( b );
-		instruction_ptr = memory.begin( ) + get_mem_or_reg( a );
+		instruction_ptr = get_mem_or_reg( a );
 	}
 
 	void inst_ret( ) {
 		auto a = pop_stack( );
-		instruction_ptr = memory.begin( ) + a;
+		instruction_ptr = a;
 	}
 
 	void inst_out( ) { 
 		auto a = pop_istack( );
-		std::cout << static_cast<unsigned char>(get_mem_or_reg( a ));
+		std::cout << static_cast<char>( a );
 	}
 
 	void inst_in( ) {
@@ -479,17 +477,17 @@ int main( int argc, char** argv ) {
 		exit( EXIT_FAILURE );
 	}
 	memory.from_file( argv[1] );
-	instruction_ptr = memory.begin( );
+	instruction_ptr = 0;
 	
 	do {
-		auto const & decoded = instructions::decoder[*instruction_ptr];
+		auto const & decoded = instructions::decoder[instruction_ptr];
 		++instruction_ptr;
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
-			inst_stack.push_back( *instruction_ptr );
+			inst_stack.push_back( instruction_ptr );
 			++instruction_ptr;
 		}
 		decoded.instruction( );
-	} while( instruction_ptr != memory.end( ) );
+	} while( instruction_ptr < memory.size( ) );
 	return EXIT_SUCCESS;
 }
 
