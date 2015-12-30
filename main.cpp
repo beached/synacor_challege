@@ -210,11 +210,11 @@ public:
 	}
 
 	reference operator[]( size_t pos ) {
-		return m_memory[pos];
+		return m_memory.at( pos );
 	}
 
 	const_reference operator[]( size_t pos ) const {
-		return m_memory[pos];
+		return m_memory.at( pos );
 	}
 };	// struct virtual_memory
 
@@ -404,11 +404,16 @@ namespace instructions {
 	void inst_wmem( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		if( !is_value( b ) ) {
-			std::cerr << "INVALID VALUE " << b << std::endl;
+		auto val_a = get_value( a );
+		auto val_b = get_value( b );
+		if( !is_value( val_b ) ) {
+			std::cerr << "INVALID VALUE " << val_b << std::endl;
+			exit( EXIT_FAILURE );
+		} else if( !is_value( val_a ) ) { 
+			std::cerr << "INVALID VALUE " << val_a << std::endl;
 			exit( EXIT_FAILURE );
 		}
-		memory[get_value( a )] = get_value( b );
+		memory[val_a] = val_b;
 	}
 
 	void inst_call( ) {
