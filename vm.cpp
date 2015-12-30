@@ -32,11 +32,14 @@ uint16_t & virtual_machine_t::get_register( uint16_t i ) {
 		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;
 		exit( EXIT_FAILURE );
 	}
+	if( i - REGISTER0 == 7 ) {
+		std::cout << "Someone is peaking" << std::endl;
+	}
 	return registers[i - REGISTER0];
 }
 
 bool virtual_machine_t::is_value( uint16_t i ) {
-	return (i & 0b0111111111111111) == i;
+	return i < REGISTER0;
 }
 
 bool virtual_machine_t::is_register( uint16_t i ) {
@@ -44,7 +47,7 @@ bool virtual_machine_t::is_register( uint16_t i ) {
 }
 
 void virtual_machine_t::validate( uint16_t i ) {
-	if( is_register( i ) || (i & 0b0111111111111111) == i ) {
+	if( i < (REGISTER0 + 8) ) {
 		return;
 	}
 	std::cerr << "Invalid instruction in memory " << i << std::endl;
@@ -85,6 +88,24 @@ uint16_t virtual_machine_t::pop_program_stack( ) {
 	auto result = *program_stack.rbegin( );
 	program_stack.pop_back( );
 	return result;
+}
+
+uint16_t virtual_machine_t::fetch_opcode( bool is_instruction ) {
+	auto current_instruction = memory[instruction_ptr];
+	if( is_instruction ) {
+		if( current_instruction >= instructions::decoder( ).size( ) ) {
+			std::cerr << "FATAL ERROR: INVALID INSTRUCTION " << current_instruction << " @ location " << instruction_ptr << std::endl;
+			exit( EXIT_FAILURE );
+		}
+	} else {
+		validate( current_instruction );
+	}
+	++instruction_ptr;
+	return current_instruction;
+}
+
+void virtual_machine_t::step( ) {
+
 }
 
 namespace instructions {

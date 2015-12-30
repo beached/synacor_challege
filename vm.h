@@ -47,8 +47,10 @@ struct virtual_machine_t {
 	static void validate( uint16_t i ); 
 	uint16_t & get_value( uint16_t & i );
 	uint16_t & get_reg_or_mem( uint16_t i );
-	uint16_t pop_argument_stack( );
+	uint16_t pop_argument_stack( );	
 	uint16_t pop_program_stack( );
+	uint16_t fetch_opcode( bool is_instruction = false );
+	void step( );
 };	// struct virtual_machine_t
 
 

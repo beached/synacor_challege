@@ -39,21 +39,14 @@ int main( int argc, char** argv ) {
 	}
 	vm.memory.from_file( argv[1] );
 
-	do {
-		auto current_instruction = vm.memory[vm.instruction_ptr];
-		if( current_instruction >= instructions::decoder( ).size( ) ) {
-			std::cerr << "FATAL ERROR: INVALID INSTRUCTION" << std::endl;
-			exit( EXIT_FAILURE );
-		}
-		auto const & decoded = instructions::decoder( )[current_instruction];
-		++vm.instruction_ptr;
+	while( true ) {		
+		auto const & decoded = instructions::decoder( )[vm.fetch_opcode( true )];
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
-			vm.argument_stack.push_back( vm.memory[vm.instruction_ptr] );
-			++vm.instruction_ptr;
+			vm.argument_stack.push_back( vm.fetch_opcode( ) );
 		}
 		decoded.instruction( vm );
-	} while( vm.instruction_ptr < vm.memory.size( ) );
-	std::cerr << "INSTRUCTION PTR OUT OF RANGE: " << vm.instruction_ptr << " >= " << vm.memory.size( ) << std::endl;
-	return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
 }
 
