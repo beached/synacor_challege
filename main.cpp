@@ -389,10 +389,10 @@ namespace instructions {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
 
-		uint16_t tmp = ~(0b1111111111111110 & b);
-		tmp = (0b0000000000000001 | b) | tmp;
+// 		uint16_t tmp = ~(0b1111111111111110 & b);
+// 		tmp = (0b0000000000000001 | b) | tmp;
 
-		get_reg_or_mem( a ) = tmp;
+		get_reg_or_mem( a ) = 32767 - get_value( b );
 	}
 
 	void inst_rmem( ) {
