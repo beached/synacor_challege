@@ -26,11 +26,14 @@ endif( )
 set( SOURCE_FILES
 	helpers.h
 	memory_helper.h
-	main.cpp
 )
 
 include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
 
-add_executable(synacor_challenge ${SOURCE_FILES})
+add_executable(synacor_challenge ${SOURCE_FILES} main.cpp )
 target_link_libraries(synacor_challenge ${Boost_Libs} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+
+add_executable( to_assembler ${SOURCE_FILES} to_assembler.cpp )
+target_link_libraries( to_assembler ${Boost_Libs} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+

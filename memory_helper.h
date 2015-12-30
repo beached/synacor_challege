@@ -27,17 +27,19 @@
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <iostream>
 #include <boost/utility/string_ref.hpp>
+#include <sstream>
+#include "helpers.h"
 
-template<size_t SIZE>
+template<size_t SIZE, typename T = uint16_t>
 struct virtual_memory_t {
-	using array_t = std::array<uint16_t, SIZE>;
+	using array_t = std::array<T, SIZE>;
 	using iterator = typename array_t::iterator;
 	using const_iterator = typename array_t::const_iterator;
 	using value_type = typename array_t::value_type;
 	using reference = typename array_t::reference;
 	using const_reference = typename array_t::const_reference;
 private:
-	array_t m_memory;
+	array_t m_memory;		
 public:
 	virtual_memory_t( ): m_memory { } {
 		zero_fill( m_memory );
@@ -93,7 +95,7 @@ public:
 		return SIZE;
 	}
 
-	reference operator[]( uint16_t pos ) {
+	reference operator[]( size_t pos ) {
 		assert( pos < m_memory.size( ) );
 		return m_memory[pos];
 	}
@@ -102,4 +104,19 @@ public:
 		assert( pos < m_memory.size( ) );
 		return m_memory[pos];
 	}
-};	// struct virtual_memory
+};	// struct virtual_memory_t
+
+template<size_t SIZE, typename T>
+std::string to_json( virtual_memory_t<SIZE, T> const & mem ) {
+	std::stringstream ss;
+	size_t pos = 0;
+	ss << "[ ";
+	for( auto it = mem.begin( ); it != mem.end( ); ++it, ++pos ) {
+		if( pos > 0 ) {
+			ss << ", ";
+		}
+		ss << *it;
+	}
+	ss << " ]";
+	return ss.str( );
+}
