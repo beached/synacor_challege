@@ -100,26 +100,29 @@ namespace impl {
 template<typename Decoder>
 std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	std::stringstream ss;
+
+	auto get_mem = [&]( auto & addr ) {
+		if( vm.memory.size( ) == addr ) {
+			std::cerr << ss.str( ) << std::endl << std::endl;
+			std::cerr << "UNEXPECTED END OF MEMORY\n" << std::endl;
+			exit( EXIT_FAILURE );
+		}
+		return vm.memory[addr++];
+	};
+
 	for( size_t addr = 0; addr < vm.memory.size( ); ++addr ) {
-		auto get_mem = [&]( ) {
-			if( vm.memory.size( ) == addr ) {
-				std::cerr << ss.str( ) << std::endl << std::endl;
-				std::cerr << "UNEXPECTED END OF MEMORY\n" << std::endl;
-				exit( EXIT_FAILURE );
-			}
-			return vm.memory[addr++];
-		};
-		auto const val = get_mem( );
 		ss << addr << ":";
+		auto const val = get_mem( addr );
 		if( instructions::is_instruction( val ) ) {
 			auto d = decoder( val );
 			ss << d.name;
 			for( size_t n = 0; n < d.arg_count; ++n ) {
-				ss << " " << impl::mem_to_str( get_mem( ) );
+				ss << " " << impl::mem_to_str( get_mem( addr ) );
 			}
 		} else {
 			ss << impl::mem_to_str( val );
 		}
+		--addr;
 		ss << "\n";
 	}
 	return ss.str( );
