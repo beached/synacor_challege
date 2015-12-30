@@ -159,7 +159,7 @@ public:
 	term_buff_t & operator=( term_buff_t const & ) = delete;
 	term_buff_t & operator=( term_buff_t && ) = default;
 
-	unsigned char get( ) {
+	char get( ) {
 		if( pos == cur_line.end( ) ) {
 			if( has_read ) {
 				has_read = false;
