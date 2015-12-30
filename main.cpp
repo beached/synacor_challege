@@ -21,11 +21,13 @@
 // SOFTWARE.
 
 #include <array>
+#include <vector>
 #include <cstdlib>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/utility/string_ref.hpp>
 #include <iostream>
 #include <cstdint>
+#include <iterator>
 
 template<typename Iterator>
 void zero_fill( Iterator begin, Iterator end ) {
@@ -37,10 +39,75 @@ void zero_fill( Container & c ) {
 	zero_fill( std::begin( c ), std::end( c ) );
 }
 
+template<typename Iterator>
+struct range_view {
+	using iterator = Iterator;
+	using const_iterator = const Iterator;
+	using value_type = typename std::iterator_traits<Iterator>::value_type;
+	using reference = typename std::iterator_traits<Iterator>::reference;
+	using const_reference = typename std::iterator_traits<Iterator>::const_reference;
+
+private:
+	Iterator * m_begin;
+	Iterator * m_end;
+public:
+
+	range_view( ) = delete;
+	~range_view( ) = default;
+	range_view( range_view const & ) = default;
+	range_view( range_view && ) = default;
+	range_view & operator=( range_view const & ) = default;
+	range_view & operator=( range_view && ) = default;
+
+
+	range_view( Iterator Begin, Iterator End ):
+		m_begin( Begin ),
+		m_end( End ) { }
+
+	iterator begin( ) {
+		return m_begin;
+	}
+
+	const_iterator begin( ) const {
+		return m_begin;
+	}
+
+	iterator end( ) {
+		return m_end;
+	}
+
+	const_iterator end( ) const {
+		return m_end;
+	}
+
+	size_t size( ) const {
+		return static_cast<size_t>(std::distance( m_begin, m_end ));
+	}
+
+	reference operator[]( size_t pos ) {
+		assert( pos < size( ) );
+		return *(m_begin + pos);
+	}
+
+	const_reference operator[]( size_t pos ) const {
+		assert( pos < size( ) );
+		return *(m_begin + pos);
+	}
+};	// struct range_view
+
+
 template<typename As>
 struct container_conversion {
 	As * m_begin;
 	As * m_end;
+
+	container_conversion( ) = delete;
+	~container_conversion( ) = default;
+	container_conversion( container_conversion const & ) = default;
+	container_conversion( container_conversion && ) = default;
+	container_conversion & operator=( container_conversion const & ) = default;
+	container_conversion & operator=( container_conversion && ) = default;
+
 
 	template<typename From>
 	container_conversion( From * Begin, From * End ):
@@ -110,7 +177,7 @@ public:
 			exit( EXIT_FAILURE );
 		}
 		
-		container_conversion<char> memory_view( m_memory.begin( ), m_memory.end( ) );
+		container_conversion<char> memory_view( m_memory.data( ), m_memory.data( ) + m_memory.size( ) );
 
 		if( file_memory.size( ) > memory_view.size( ) ) {
 			std::cerr << "VM File does not have the correct size.  It is " << file_memory.size( ) << " bytes, which is > " << memory_view.size( ) << "bytes" << std::endl; 
@@ -152,7 +219,247 @@ public:
 };	// struct virtual_memory
 
 std::array<uint16_t, 8> registers;
+std::vector<uint16_t> inst_stack;
+std::vector<uint16_t> stack;
 virtual_memory_t memory;
+const uint16_t MODULO = 32768;
+
+using instruction_ptr_t = virtual_memory_t::iterator;
+
+using state_fptr_t = void( );
+
+instruction_ptr_t instruction_ptr;
+
+uint16_t const REG_POS[8] = { 32768, 32769, 32770, 32771, 32772, 32773, 32774, 32775 };
+
+bool is_value( uint16_t i ) {
+	return i < REG_POS[0];
+}
+
+bool is_register( uint16_t i ) {
+	return i >= REG_POS[0] && i <= REG_POS[7];
+}
+
+void validate( uint16_t i ) {
+	if( is_value( i ) || is_register( i ) ) {
+		return;
+	}
+	std::cerr << "Invalid instruction in memory " << i << std::endl;
+	exit( EXIT_FAILURE );
+}
+
+
+
+uint16_t & get_register( uint16_t i ) { 
+	if( !is_register( i ) ) {
+		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;
+		exit( EXIT_FAILURE );
+	}
+	return registers[i - REG_POS[0]];
+}
+
+uint16_t & get_value( uint16_t & i ) {	
+	validate( i );
+	if( is_register( i ) ) {
+		return get_register( i );
+	}
+	return i;
+}
+
+uint16_t pop_istack( ) {
+	auto result = *inst_stack.rbegin( );
+	inst_stack.pop_back( );
+	return result;
+}
+
+uint16_t pop_stack( ) {
+	auto result = *stack.rbegin( );
+	stack.pop_back( );
+	return result;
+}
+
+uint16_t & get_mem_or_reg( uint16_t i ) {
+	validate( i );
+	if( is_register( i ) ) {
+		return get_register( i );
+	} else {
+		return memory[i];
+	}
+}
+
+namespace instructions {
+	void inst_halt( ) {
+		exit( EXIT_SUCCESS );
+	}
+
+	void inst_set( ) {
+		auto b = pop_istack( );
+		auto a = pop_istack( );		
+		get_register( b ) = get_mem_or_reg( a );
+	}
+
+	void inst_push( ) {
+		auto a = pop_istack( );
+		stack.push_back( a );
+	}
+
+	void inst_pop( ) {
+		if( stack.empty( ) ) {
+			std::cerr << "STACK UNDERFLOW" << std::endl;
+			exit( EXIT_FAILURE );
+		}
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = pop_stack( );
+	}
+
+	void inst_eq( ) {
+		auto c = pop_istack( );
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = get_mem_or_reg( b ) == get_mem_or_reg( c ) ? 1 : 0;
+	}
+
+	void inst_gt( ) {
+		auto c = pop_istack( );
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = get_mem_or_reg( b ) > get_mem_or_reg( c ) ? 1 : 0;
+	}
+
+	void inst_jmp( ) {
+		auto a = pop_istack( );
+		instruction_ptr = memory.begin( ) + get_mem_or_reg( a );
+	}
+
+	void inst_jt( ) {
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		if( get_mem_or_reg( a ) != 0 ) {
+			instruction_ptr = memory.begin( ) + get_mem_or_reg( b );
+		}
+	}
+
+	void inst_jf( ) {
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		if( get_mem_or_reg( a ) == 0 ) {
+			instruction_ptr = memory.begin( ) + get_mem_or_reg( b );
+		}
+	}
+
+	void inst_add( ) { 
+		auto c = pop_istack( );
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		
+		get_mem_or_reg( a ) = (get_mem_or_reg( b ) + get_mem_or_reg( c )) % MODULO;
+	}
+
+	void inst_mult( ) {
+		auto c = pop_istack( );
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		auto tmp = (static_cast<uint32_t>(get_mem_or_reg( b )) * static_cast<uint32_t>(get_mem_or_reg( c ))) % 32768u;
+		get_mem_or_reg( a ) = static_cast<uint16_t>(tmp);
+	}
+
+	void inst_mod( ) {
+		auto c = pop_istack( );
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = get_mem_or_reg( b ) % get_mem_or_reg( c );
+	}
+
+	void inst_and( ) {
+		auto c = pop_istack( );
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = get_mem_or_reg( b ) & get_mem_or_reg( c );
+	}
+
+	void inst_or() {
+		auto c = pop_istack( );
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = get_mem_or_reg( b ) | get_mem_or_reg( c );
+	}
+
+	void inst_not( ) {
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = ~get_mem_or_reg( b );
+	}
+
+	void inst_rmem( ) {
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		get_mem_or_reg( a ) = get_mem_or_reg( b );
+	}
+
+	void inst_wmem( ) {
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		if( !is_value( b ) ) {
+			std::cerr << "INVALID VALUE " << b << std::endl;
+			exit( EXIT_FAILURE );
+		}
+		get_mem_or_reg( a ) = b;
+	}
+
+	void inst_call( ) {
+		auto b = pop_istack( );
+		auto a = pop_istack( );
+		stack.push_back( b );
+		instruction_ptr = memory.begin( ) + get_mem_or_reg( a );
+	}
+
+	void inst_ret( ) {
+		auto a = pop_stack( );
+		instruction_ptr = memory.begin( ) + a;
+	}
+
+	void inst_out( ) { 
+		auto a = pop_istack( );
+		std::cout << static_cast<unsigned char>(get_mem_or_reg( a ));
+	}
+
+	void inst_in( ) {
+		auto a = pop_istack( );
+		unsigned char tmp = 0;
+		std::cin >> tmp;
+		get_mem_or_reg( a ) = tmp;		
+	}
+
+	void inst_noop( ) {
+
+	}
+
+	std::pair<size_t const, std::function<void()> const> const decoder[22] = {
+		{ 0, inst_halt },
+		{ 2, inst_set },
+		{ 1, inst_push },
+		{ 1, inst_pop },
+		{ 3, inst_eq },
+		{ 3, inst_gt },
+		{ 1, inst_jmp },
+		{ 2, inst_jt },
+		{ 2, inst_jf },
+		{ 3, inst_add },
+		{ 3, inst_mult },
+		{ 3, inst_mod },
+		{ 3, inst_and },
+		{ 3, inst_or },
+		{ 2, inst_not },
+		{ 2, inst_rmem },
+		{ 2, inst_wmem },
+		{ 1, inst_call },
+		{ 0, inst_ret },
+		{ 1, inst_out },
+		{ 1, inst_in },
+		{ 0, inst_noop }
+	};
+
+}
 
 int main( int argc, char** argv ) {
 	zero_fill( registers );
@@ -161,8 +468,17 @@ int main( int argc, char** argv ) {
 		exit( EXIT_FAILURE );
 	}
 	memory.from_file( argv[1] );
-
-
+	instruction_ptr = memory.begin( );
+	
+	do {
+		auto decoded = instructions::decoder[*instruction_ptr];
+		++instruction_ptr;
+		for( size_t n = 0; n < decoded.first; ++n ) {
+			inst_stack.push_back( *instruction_ptr );
+			++instruction_ptr;
+		}
+		decoded.second( );
+	} while( instruction_ptr != memory.end( ) );
 	return EXIT_SUCCESS;
 }
 
