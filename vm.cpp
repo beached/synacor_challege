@@ -301,21 +301,20 @@ namespace instructions {
 }	// namespace instructions
 
 bool is_alphanum( uint16_t i ) {
-	auto const c = static_cast<char>(i);
-	return 32 <= c && c < 127;
+	return 32 <= i && i < 127;
 }
 
-std::string impl::mem_to_str(uint16_t i ) {
+std::string impl::mem_to_str(uint16_t const i ) {
 	std::stringstream ss;
 	if( virtual_machine_t::is_register( i ) ) {
 		ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0);
 	} else if( i < virtual_machine_t::REGISTER0 ) {
 		ss << static_cast<int>(i);
 		if( is_alphanum( i ) ) {
-			ss << "'" << static_cast<char>(i) << "'";
+			ss << "'" << static_cast<unsigned char>(i) << "'";
 		}
 	} else {
-		ss << "INVALID_" << static_cast<int>(i);
+		ss << "INVALID(" << static_cast<int>(i) << ")";
 	}
 	return ss.str( );
 
