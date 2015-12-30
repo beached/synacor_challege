@@ -28,6 +28,8 @@
 #include <iostream>
 #include <boost/utility/string_ref.hpp>
 
+#include "helpers.h"
+
 template<size_t SIZE>
 struct virtual_memory_t {
 	using array_t = std::array<uint16_t, SIZE>;
