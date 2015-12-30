@@ -218,20 +218,20 @@ public:
 	}
 };	// struct virtual_memory
 
-std::array<uint16_t, 8> registers;
-std::vector<uint16_t> inst_stack;
-std::vector<uint16_t> stack;
-virtual_memory_t memory;
-const uint16_t MODULO = 32768;
-
 using instruction_ptr_t = virtual_memory_t::iterator;
-
 using state_fptr_t = void( );
 
-instruction_ptr_t instruction_ptr;
+namespace {
+	std::array<uint16_t, 8> registers;
+	std::vector<uint16_t> inst_stack;
+	std::vector<uint16_t> stack;
+	virtual_memory_t memory;
+	const uint16_t MODULO = 32768;
 
-uint16_t const REG_POS[8] = { 32768, 32769, 32770, 32771, 32772, 32773, 32774, 32775 };
+	instruction_ptr_t instruction_ptr;
 
+	uint16_t const REG_POS[8] = { 32768, 32769, 32770, 32771, 32772, 32773, 32774, 32775 };
+}
 bool is_value( uint16_t i ) {
 	return i < REG_POS[0];
 }
