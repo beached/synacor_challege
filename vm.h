@@ -111,16 +111,16 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	};
 
 	for( size_t addr = 0; addr < vm.memory.size( ); ++addr ) {
-		ss << addr << ":";
+		ss << addr << ": ";
 		auto const val = get_mem( addr );
 		if( instructions::is_instruction( val ) ) {
 			auto d = decoder( val );
 			ss << d.name;
 			for( size_t n = 0; n < d.arg_count; ++n ) {
-				ss << " " << impl::mem_to_str( get_mem( addr ) );
+				ss << "\t" << impl::mem_to_str( get_mem( addr ) );
 			}
 		} else {
-			ss << " " << impl::mem_to_str( val );
+			ss << impl::mem_to_str( val );
 		}
 		--addr;
 		ss << "\n";
