@@ -434,29 +434,39 @@ namespace instructions {
 
 	}
 
-	std::pair<size_t const, std::function<void()> const> const decoder[22] = {
-		{ 0, inst_halt },
-		{ 2, inst_set },
-		{ 1, inst_push },
-		{ 1, inst_pop },
-		{ 3, inst_eq },
-		{ 3, inst_gt },
-		{ 1, inst_jmp },
-		{ 2, inst_jt },
-		{ 2, inst_jf },
-		{ 3, inst_add },
-		{ 3, inst_mult },
-		{ 3, inst_mod },
-		{ 3, inst_and },
-		{ 3, inst_or },
-		{ 2, inst_not },
-		{ 2, inst_rmem },
-		{ 2, inst_wmem },
-		{ 1, inst_call },
-		{ 0, inst_ret },
-		{ 1, inst_out },
-		{ 1, inst_in },
-		{ 0, inst_noop }
+	struct decoded_inst_t {
+		typedef void( *instruction_t )( );
+		size_t const arg_count;
+		instruction_t instruction;
+
+		decoded_inst_t( size_t ac, instruction_t i ): 
+			arg_count( ac ),
+			instruction( i ) { }
+	};
+
+	decoded_inst_t decoder[22] = {
+		{ 0, inst_halt },	// 0
+		{ 2, inst_set },	// 1
+		{ 1, inst_push },	// 2
+		{ 1, inst_pop },	// 3
+		{ 3, inst_eq },		// 4 
+		{ 3, inst_gt },		// 5
+		{ 1, inst_jmp },	// 6
+		{ 2, inst_jt },		// 7
+		{ 2, inst_jf },		// 8
+		{ 3, inst_add },	// 9
+		{ 3, inst_mult },	// 10
+		{ 3, inst_mod },	// 11
+		{ 3, inst_and },	// 12
+		{ 3, inst_or },		// 13
+		{ 2, inst_not },	// 14
+		{ 2, inst_rmem },	// 15
+		{ 2, inst_wmem },	// 16
+		{ 1, inst_call },	// 17
+		{ 0, inst_ret },	// 18
+		{ 1, inst_out },	// 19
+		{ 1, inst_in },		// 20
+		{ 0, inst_noop }	// 21
 	};
 
 }
@@ -471,13 +481,13 @@ int main( int argc, char** argv ) {
 	instruction_ptr = memory.begin( );
 	
 	do {
-		auto decoded = instructions::decoder[*instruction_ptr];
+		auto const & decoded = instructions::decoder[*instruction_ptr];
 		++instruction_ptr;
-		for( size_t n = 0; n < decoded.first; ++n ) {
+		for( size_t n = 0; n < decoded.arg_count; ++n ) {
 			inst_stack.push_back( *instruction_ptr );
 			++instruction_ptr;
 		}
-		decoded.second( );
+		decoded.instruction( );
 	} while( instruction_ptr != memory.end( ) );
 	return EXIT_SUCCESS;
 }
