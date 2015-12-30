@@ -289,7 +289,7 @@ uint16_t & get_mem_or_reg( uint16_t i ) {
 	if( is_register( i ) ) {
 		return get_register( i );
 	} else {
-		return memory[i];
+		return i;
 	}
 }
 
@@ -447,7 +447,7 @@ namespace instructions {
 	};
 
 	namespace {
-		decoded_inst_t decoder[22] = {
+		std::vector<decoded_inst_t> decoder = {
 			{ 0, inst_halt },	// 0
 			{ 2, inst_set },	// 1
 			{ 1, inst_push },	// 2
@@ -484,7 +484,12 @@ int main( int argc, char** argv ) {
 	instruction_ptr = 0;
 	
 	do {
-		auto const & decoded = instructions::decoder[memory[instruction_ptr]];
+		auto current_instruction = memory[instruction_ptr];
+		if( current_instruction >= instructions::decoder.size( ) ) {
+			std::cerr << "FATAL ERROR: INVALID INSTRUCTION" << std::endl;
+			exit( EXIT_FAILURE );
+		}
+		auto const & decoded = instructions::decoder[current_instruction];
 		++instruction_ptr;
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
 			inst_stack.push_back( memory[instruction_ptr] );
