@@ -117,7 +117,7 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 			auto d = decoder( val );
 			ss << d.name;
 			for( size_t n = 0; n < d.arg_count; ++n ) {
-				ss << "\t" << impl::mem_to_str( get_mem( addr ) );
+				ss << "  " << impl::mem_to_str( get_mem( addr ) );
 			}
 		} else {
 			ss << impl::mem_to_str( val );
