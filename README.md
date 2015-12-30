@@ -1,2 +1,2 @@
-# synacor_challege
+# synacor_challenge
 Synacor Challenge
