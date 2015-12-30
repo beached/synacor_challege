@@ -246,8 +246,6 @@ void validate( uint16_t i ) {
 	exit( EXIT_FAILURE );
 }
 
-
-
 uint16_t & get_register( uint16_t i ) { 
 	if( !is_register( i ) ) {
 		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;
@@ -262,6 +260,14 @@ uint16_t & get_value( uint16_t & i ) {
 		return get_register( i );
 	}
 	return i;
+}
+
+uint16_t & get_reg_or_mem( uint16_t i ) {
+	validate( i );
+	if( is_register( i ) ) {
+		return get_register( i );
+	}
+	return memory[i];
 }
 
 uint16_t pop_istack( ) {
@@ -284,15 +290,6 @@ uint16_t pop_stack( ) {
 	return result;
 }
 
-uint16_t & get_mem_or_reg( uint16_t i ) {
-	validate( i );
-	if( is_register( i ) ) {
-		return get_register( i );
-	} else {
-		return i;
-	}
-}
-
 namespace instructions {
 	void inst_halt( ) {
 		exit( EXIT_SUCCESS );
@@ -301,51 +298,53 @@ namespace instructions {
 	void inst_set( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );		
-		get_register( a ) = b;
+		get_register( a ) = get_value( b );
 	}
 
 	void inst_push( ) {
 		auto a = pop_istack( );
-		stack.push_back( a );
+		stack.push_back( get_value( a ) );
 	}
 
 	void inst_pop( ) {
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = pop_stack( );
+
+		auto s = pop_stack( );
+		get_reg_or_mem( a ) = get_value( s );
 	}
 
 	void inst_eq( ) {
 		auto c = pop_istack( );
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = get_mem_or_reg( b ) == get_mem_or_reg( c ) ? 1 : 0;
+		get_reg_or_mem( a ) = get_value( b ) == get_value( c ) ? 1 : 0;
 	}
 
 	void inst_gt( ) {
 		auto c = pop_istack( );
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = get_mem_or_reg( b ) > get_mem_or_reg( c ) ? 1 : 0;
+		get_reg_or_mem( a ) = get_value( b ) > get_value( c ) ? 1 : 0;
 	}
 
 	void inst_jmp( ) {
 		auto a = pop_istack( );
-		instruction_ptr = get_mem_or_reg( a );
+		instruction_ptr = get_value( a );
 	}
 
 	void inst_jt( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		if( get_mem_or_reg( a ) != 0 ) {
-			instruction_ptr = get_mem_or_reg( b );
+		if( get_value( a ) != 0 ) {
+			instruction_ptr = get_value( b );
 		}
 	}
 
 	void inst_jf( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		if( get_mem_or_reg( a ) == 0 ) {
-			instruction_ptr = get_mem_or_reg( b );
+		if( get_value( a ) == 0 ) {
+			instruction_ptr = get_value( b );
 		}
 	}
 
@@ -354,48 +353,48 @@ namespace instructions {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
 		
-		get_mem_or_reg( a ) = (get_mem_or_reg( b ) + get_mem_or_reg( c )) % MODULO;
+		get_reg_or_mem( a ) = (get_value( b ) + get_value( c )) % MODULO;
 	}
 
 	void inst_mult( ) {
 		auto c = pop_istack( );
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		auto tmp = (static_cast<uint32_t>(get_mem_or_reg( b )) * static_cast<uint32_t>(get_mem_or_reg( c ))) % 32768u;
-		get_mem_or_reg( a ) = static_cast<uint16_t>(tmp);
+		auto tmp = (static_cast<uint32_t>(get_value( b )) * static_cast<uint32_t>(get_value( c ))) % 32768u;
+		get_reg_or_mem( a ) = static_cast<uint16_t>(tmp);
 	}
 
 	void inst_mod( ) {
 		auto c = pop_istack( );
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = get_mem_or_reg( b ) % get_mem_or_reg( c );
+		get_reg_or_mem( a ) = get_value( b ) % get_value( c );
 	}
 
 	void inst_and( ) {
 		auto c = pop_istack( );
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = get_mem_or_reg( b ) & get_mem_or_reg( c );
+		get_reg_or_mem( a ) = get_value( b ) & get_value( c );
 	}
 
 	void inst_or() {
 		auto c = pop_istack( );
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = get_mem_or_reg( b ) | get_mem_or_reg( c );
+		get_reg_or_mem( a ) = get_value( b ) | get_value( c );
 	}
 
 	void inst_not( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = ~get_mem_or_reg( b );
+		get_reg_or_mem( a ) = ~get_value( b );
 	}
 
 	void inst_rmem( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_mem_or_reg( a ) = get_mem_or_reg( b );
+		get_reg_or_mem( a ) = memory[get_value( b )];
 	}
 
 	void inst_wmem( ) {
@@ -405,14 +404,14 @@ namespace instructions {
 			std::cerr << "INVALID VALUE " << b << std::endl;
 			exit( EXIT_FAILURE );
 		}
-		get_mem_or_reg( a ) = b;
+		memory[get_value( a )] = get_value( b );
 	}
 
 	void inst_call( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
 		stack.push_back( b );
-		instruction_ptr = get_mem_or_reg( a );
+		instruction_ptr = get_value( a );
 	}
 
 	void inst_ret( ) {
@@ -422,14 +421,14 @@ namespace instructions {
 
 	void inst_out( ) { 
 		auto a = pop_istack( );
-		std::cout << static_cast<char>( a );
+		std::cout << static_cast<char>( get_value( a ) );
 	}
 
 	void inst_in( ) {
 		auto a = pop_istack( );
 		unsigned char tmp = 0;
 		std::cin >> tmp;
-		get_mem_or_reg( a ) = tmp;		
+		get_reg_or_mem( a ) = tmp;		
 	}
 
 	void inst_noop( ) {
