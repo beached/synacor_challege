@@ -473,7 +473,6 @@ namespace instructions {
 
 	void inst_in( ) {
 		auto a = pop_istack( );
-		unsigned char tmp = 0;
 		get_reg_or_mem( a ) = term_buff.get( );
 	}
 
