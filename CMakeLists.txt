@@ -26,6 +26,8 @@ endif( )
 set( SOURCE_FILES
 	helpers.h
 	memory_helper.h
+	vm.h
+	vm.cpp
 )
 
 include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )
