@@ -120,7 +120,7 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 				ss << " " << impl::mem_to_str( get_mem( addr ) );
 			}
 		} else {
-			ss << impl::mem_to_str( val );
+			ss << " " << impl::mem_to_str( val );
 		}
 		--addr;
 		ss << "\n";
