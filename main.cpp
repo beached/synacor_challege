@@ -388,7 +388,11 @@ namespace instructions {
 	void inst_not( ) {
 		auto b = pop_istack( );
 		auto a = pop_istack( );
-		get_reg_or_mem( a ) = ~get_value( b );
+
+		uint16_t tmp = ~(0b1111111111111110 & b);
+		tmp = (0b0000000000000001 | b) | tmp;
+
+		get_reg_or_mem( a ) = tmp;
 	}
 
 	void inst_rmem( ) {
