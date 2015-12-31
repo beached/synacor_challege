@@ -106,8 +106,9 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 		}
 		if( inc ) {
 			++addr;
+			return vm.memory[addr - 1];
 		}
-		return vm.memory[addr-1];
+		return vm.memory[addr];
 	};
 
 	auto is_next_output = [&]( uint16_t i ) {
@@ -134,21 +135,26 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	bool is_output = false;
 
 	for( uint16_t addr = 0; addr < vm.memory.size( ); ++addr ) {
-		if( !is_outputting ) {
-			ss << addr << ": ";
-		}
-		auto const val = get_mem( addr );
+		ss << addr << ": ";
+		auto val = get_mem( addr );
 		if( instructions::is_instruction( val ) ) {
 			auto d = decoder( val );
-			is_output = d.name.compare( "OUT" );
-			if( !is_output || !is_outputting ) {
-				ss << d.name;
-			} 
-			for( size_t n = 0; n < d.arg_count; ++n ) {
-				ss << "  ";
-				mem_to_str( get_mem( addr ) );
+			ss << d.name;
+			if( val == 19/*OUT*/ ) {
+				do {
+					ss << " ";
+					mem_to_str( get_mem( addr ) );
+					val = get_mem( addr, false );
+					if( val == 19 ) {
+						++addr;
+					}
+				} while( val == 19 );
+			} else {
+				for( size_t n = 0; n < d.arg_count; ++n ) {
+					ss << "  ";
+					mem_to_str( get_mem( addr ) );
+				}
 			}
-			is_outputting = is_output && is_next_output( addr );
 		} else {
 			mem_to_str( val );
 		}
