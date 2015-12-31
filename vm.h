@@ -96,10 +96,9 @@ bool is_alphanum( uint16_t i );
 template<typename Decoder>
 std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	std::stringstream ss;
-	bool is_outputting = false;
 
 	auto get_mem = [&]( auto & addr, bool inc = true ) {
-		if( vm.memory.size( ) == addr ) {
+		if( addr >= vm.memory.size( ) ) {
 			std::cerr << ss.str( ) << std::endl << std::endl;
 			std::cerr << "UNEXPECTED END OF MEMORY\n" << std::endl;
 			exit( EXIT_FAILURE );
@@ -111,28 +110,38 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 		return vm.memory[addr];
 	};
 
-	auto is_next_output = [&]( uint16_t i ) {
-		auto val = get_mem( i, false );
-		if( !instructions::is_instruction( val ) ) {
-			return false;
+	auto escape = []( int i ) {
+		auto str = std::to_string( i );
+		while( str.size( ) < 3 ) {
+			str = "0" + str;
 		}
-		return 0 == decoder( val ).name.compare( "OUT" );
+		str = "\\" + str;
+		return str;
 	};
 
-	auto mem_to_str = [&]( auto i ) {
+	auto mem_to_str = [&]( auto i, bool raw_ascii = false ) {
 		if( virtual_machine_t::is_register( i ) ) {
 			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i, false ) << ")";
 		} else if( i < virtual_machine_t::REGISTER0 ) {
-			ss << static_cast<int>(i);
-			if( is_alphanum( i ) ) {
-				ss << "'" << static_cast<unsigned char>(i) << "'";
+			if( raw_ascii || is_alphanum( i ) ) {
+				if( !raw_ascii ) {
+					ss << static_cast<int>(i) << "'";
+				}
+				if( is_alphanum( i ) ) {
+					ss << static_cast<unsigned char>(i);
+				} else if( raw_ascii ) {
+					ss << escape( i );
+				}
+				if( !raw_ascii ) {
+					ss << "'";
+				}
+			} else {
+				ss << "DATA(" << static_cast<int>(i) << ")";
 			}
 		} else {
 			ss << "INVALID(" << static_cast<int>(i) << ")";
 		}
 	};
-
-	bool is_output = false;
 
 	for( uint16_t addr = 0; addr < vm.memory.size( ); ++addr ) {
 		ss << addr << ": ";
@@ -141,14 +150,15 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 			auto d = decoder( val );
 			ss << d.name;
 			if( val == 19/*OUT*/ ) {
+				ss << " \"";
 				do {
-					ss << " ";
-					mem_to_str( get_mem( addr ) );
+					mem_to_str( get_mem( addr ), true );
 					val = get_mem( addr, false );
 					if( val == 19 ) {
 						++addr;
 					}
 				} while( val == 19 );
+				ss << "\"";
 			} else {
 				for( size_t n = 0; n < d.arg_count; ++n ) {
 					ss << "  ";
@@ -159,9 +169,7 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 			mem_to_str( val );
 		}
 		--addr;
-		if( !is_outputting ) {
-			ss << "\n";
-		}
+		ss << "\n";
 	}
 	return ss.str( );
 }
