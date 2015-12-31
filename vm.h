@@ -24,7 +24,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
-
+#include <cstring>
 #include <vector>
 #include "helpers.h"
 #include "memory_helper.h"
@@ -96,14 +96,26 @@ bool is_alphanum( uint16_t i );
 template<typename Decoder>
 std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	std::stringstream ss;
+	bool is_outputting = false;
 
-	auto get_mem = [&]( auto & addr ) {
+	auto get_mem = [&]( auto & addr, bool inc = true ) {
 		if( vm.memory.size( ) == addr ) {
 			std::cerr << ss.str( ) << std::endl << std::endl;
 			std::cerr << "UNEXPECTED END OF MEMORY\n" << std::endl;
 			exit( EXIT_FAILURE );
 		}
-		return vm.memory[addr++];
+		if( inc ) {
+			++addr;
+		}
+		return vm.memory[addr-1];
+	};
+
+	auto is_next_output = [&]( uint16_t i ) {
+		auto val = get_mem( i, false );
+		if( !instructions::is_instruction( val ) ) {
+			return false;
+		}
+		return 0 == decoder( val ).name.compare( "OUT" );
 	};
 
 	auto mem_to_str = [&]( auto i ) {
@@ -119,21 +131,31 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 		}
 	};
 
-	for( size_t addr = 0; addr < vm.memory.size( ); ++addr ) {
-		ss << addr << ": ";
+	bool is_output = false;
+
+	for( uint16_t addr = 0; addr < vm.memory.size( ); ++addr ) {
+		if( !is_outputting ) {
+			ss << addr << ": ";
+		}
 		auto const val = get_mem( addr );
 		if( instructions::is_instruction( val ) ) {
 			auto d = decoder( val );
-			ss << d.name;
+			is_output = d.name.compare( "OUT" );
+			if( !is_output || !is_outputting ) {
+				ss << d.name;
+			} 
 			for( size_t n = 0; n < d.arg_count; ++n ) {
 				ss << "  ";
 				mem_to_str( get_mem( addr ) );
 			}
+			is_outputting = is_output && is_next_output( addr );
 		} else {
 			mem_to_str( val );
 		}
 		--addr;
-		ss << "\n";
+		if( !is_outputting ) {
+			ss << "\n";
+		}
 	}
 	return ss.str( );
 }
