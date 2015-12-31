@@ -53,23 +53,28 @@ virtual_machine_t::virtual_machine_t( boost::string_ref filename ):
 	term_buff( ),
 	instruction_ptr( 0 ),
 	breakpoints( ),
-	vm_file( filename ) {
+	vm_file( filename.to_string( ) ) {
 	
-	load( filename );
+	load( filename.to_string( ) );
 }
 
-void virtual_machine_t::load( boost::string_ref filename ) {
+
+void virtual_machine_t::load( std::string filename ) {
+	vm_file = std::move( filename );
+
 	zero_fill( registers );
 	zero_fill( memory );
+	program_stack.clear( );
+	argument_stack.clear( );
 	instruction_ptr = 0;
-	memory.from_file( filename );
+	memory.from_file( vm_file );
 }
 
 void virtual_machine_t::tick( ) {
-		if( breakpoints.count( instruction_ptr ) > 0 ) {
-			std::cout << "Breakpoint hit at address " << instruction_ptr << "\n";
+		if( should_break || breakpoints.count( instruction_ptr ) > 0 ) {
+			std::cout << "Breaking at address " << instruction_ptr << "\n";
 			console( *this );
-			std::cout << "Debugger closed\n";
+			should_break = false;			
 		}
 		auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
@@ -78,7 +83,7 @@ void virtual_machine_t::tick( ) {
 		decoded.instruction( *this );
 }
 
-uint16_t & virtual_machine_t::get_register( uint16_t i, bool log7 ) {
+uint16_t & virtual_machine_t::get_register( uint16_t i ) {
 	if( !is_register( i ) ) {
 		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;
 		exit( EXIT_FAILURE );

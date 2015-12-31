@@ -48,7 +48,7 @@ struct virtual_machine_t {
 	virtual_machine_t( boost::string_ref filename );
 
 	void tick( );
-	uint16_t & get_register( uint16_t i, bool log7 = true );
+	uint16_t & get_register( uint16_t i );
 	static bool is_value( uint16_t i );
 	static bool is_register( uint16_t i );
 	static void validate( uint16_t i ); 
@@ -57,7 +57,7 @@ struct virtual_machine_t {
 	uint16_t pop_argument_stack( );	
 	uint16_t pop_program_stack( );
 	uint16_t fetch_opcode( bool is_instruction = false );
-	void load( boost::string_ref filename );
+	void load( std::string filename );
 };	// struct virtual_machine_t
 
 std::string full_dump_string( virtual_machine_t & vm );
@@ -136,7 +136,7 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 				ss << escape( i );
 			}
 		} else if( virtual_machine_t::is_register( i ) ) {
-			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i, false ) << ")";
+			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i ) << ")";
 		} else if( i < virtual_machine_t::REGISTER0 ) {
 			ss << static_cast<int>(i);
 		} else {
