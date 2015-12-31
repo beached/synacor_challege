@@ -146,6 +146,7 @@ void virtual_machine_t::load_state( boost::string_ref filename ) {
 			size_t program_stack_size = *get_it( );
 			++offset;
 			auto it = get_it( );
+			program_stack.reserve( program_stack_size );
 			std::copy( it, it + program_stack_size, program_stack.begin( ) ); 
 			offset += program_stack.size( );
 		}
@@ -153,6 +154,7 @@ void virtual_machine_t::load_state( boost::string_ref filename ) {
 			size_t argument_stack_size = *get_it( );
 			++offset;
 			auto it = get_it( );
+			argument_stack.reserve( argument_stack_size );
 			std::copy( it, it + argument_stack_size, argument_stack.begin( ) ); 
 		}
 	}
