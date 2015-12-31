@@ -96,12 +96,18 @@ public:
 	}
 
 	reference operator[]( size_t pos ) {
-		assert( pos < m_memory.size( ) );
+		if( pos >= m_memory.size( ) ) {
+			std::cerr << "OUT OF RANGE MEMORY ATTEMP\n";
+			exit( EXIT_FAILURE );
+		}
 		return m_memory[pos];
 	}
 
 	const_reference operator[]( size_t pos ) const {
-		assert( pos < m_memory.size( ) );
+		if( pos >= m_memory.size( ) ) {
+			std::cerr << "OUT OF RANGE MEMORY ATTEMP\n";
+			exit( EXIT_FAILURE );
+		}
 		return m_memory[pos];
 	}
 };	// struct virtual_memory_t

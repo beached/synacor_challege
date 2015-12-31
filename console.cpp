@@ -185,8 +185,8 @@ void console( virtual_machine_t & vm ) {
 			assert( addr < vm.memory.size( ) );
 			vm.breakpoints.erase( addr );
 		} else if( tokens[0] == "reloadvm" ) {
-			std::cout << "Reloading vm from '" << vm.vm_file << "'\n";
-			vm.load( vm.vm_file );			
+			vm.load( vm.vm_file );
+			std::cout << "Reloaded vm from '" << vm.vm_file << "'\n\n";					
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );

@@ -69,6 +69,7 @@ void virtual_machine_t::tick( ) {
 		if( breakpoints.count( instruction_ptr ) > 0 ) {
 			std::cout << "Breakpoint hit at address " << instruction_ptr << "\n";
 			console( *this );
+			std::cout << "Debugger closed\n";
 		}
 		auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
@@ -81,9 +82,6 @@ uint16_t & virtual_machine_t::get_register( uint16_t i, bool log7 ) {
 	if( !is_register( i ) ) {
 		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;
 		exit( EXIT_FAILURE );
-	}
-	if( log7 && i - REGISTER0 == 7 ) {
-		std::cout << "Someone is peaking" << std::endl;
 	}
 	return registers[i - REGISTER0];
 }
