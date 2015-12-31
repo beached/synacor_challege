@@ -120,21 +120,17 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	};
 
 	auto mem_to_str = [&]( auto i, bool raw_ascii = false ) {
-		if( virtual_machine_t::is_register( i ) ) {
+		if( raw_ascii ) {
+			if( is_alphanum( i ) ) {
+				ss << static_cast<unsigned char>(i);
+			} else {
+				ss << escape( i );
+			}
+		} else if( virtual_machine_t::is_register( i ) ) {
 			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i, false ) << ")";
 		} else if( i < virtual_machine_t::REGISTER0 ) {
-			if( raw_ascii || is_alphanum( i ) ) {
-				if( !raw_ascii ) {
-					ss << static_cast<int>(i) << "'";
-				}
-				if( is_alphanum( i ) ) {
-					ss << static_cast<unsigned char>(i);
-				} else if( raw_ascii ) {
-					ss << escape( i );
-				}
-				if( !raw_ascii ) {
-					ss << "'";
-				}
+			if( is_alphanum( i ) ) {
+				ss << static_cast<int>(i) << "'" << static_cast<unsigned char>(i) << "'";
 			} else {
 				ss << "DATA(" << static_cast<int>(i) << ")";
 			}
