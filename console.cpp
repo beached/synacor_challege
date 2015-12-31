@@ -47,7 +47,7 @@ namespace {
 		std::cout << "setbp <address> -> set brakpoint at <address>\n";
 		std::cout << "clearbp <address> -> clear brakpoint at <address>\n";
 		std::cout << "reloadvm -> reload existing vm\n";
-		std::cout << "savestate -> save the state of program to file(sc_<time since epoch>_state.bin)\n";
+		std::cout << "savestate [filename] -> save the state of program to [filename] or sc_<time since epoch>_state.bin if not specified\n";
 		std::cout << "loadtate <filename> -> load the state of program from <filename>\n";
 		std::cout << "\n";
 	}
@@ -197,7 +197,12 @@ void console( virtual_machine_t & vm ) {
 			vm.load_state( vm.vm_file );
 			std::cout << "Reloaded vm from '" << vm.vm_file << "'\n";
 		} else if( tokens[0] == "savestate" ) {
-			auto fname = generate_unique_file_name( "sc_", "_state", "bin" );
+			std::string fname;
+			if( tokens.size( ) > 1 ) {
+				fname = current_line.substr( 10 );
+			} else {
+				fname = generate_unique_file_name( "sc_", "_state", "bin" );
+			}
 			vm.save_state( fname );
 			std::cout << "State saved to file '" << fname << "'\n";
 		} else if( tokens[0] == "loadstate" ) {
