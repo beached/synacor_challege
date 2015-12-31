@@ -30,8 +30,8 @@
 namespace {
 	void print_help( ) {
 		std::cout << "Debugging console\nValid commmands are:\n";
-		std::cout << "savememory -> save memory to a file(sc_<time since epoch>_dump.txt)\n";
-		std::cout << "showmemory [from_address] [to_address] -> print all memory to screen\n";
+		std::cout << "saveasm [filename] -> save assembly of memory to to [filename] or sc_<time since epoch>_asm.txt if not specified\n";
+		std::cout << "showasm [from_address] [to_address] -> print all memory to screen\n";
 		std::cout << "continue -> continue program\n";
 		std::cout << "quit -> exit program\n";
 		std::cout << "getip -> print current instruction ptr value\n";
@@ -40,10 +40,10 @@ namespace {
 		std::cout << "setmem <address> <value> -> set the memory at <address> to <value>\n";
 		std::cout << "getreg <0-7> print register <0-7>\n";
 		std::cout << "setreg <0-7> <value> -> set the register <0-7> to <value>\n";
-		std::cout << "getregisters -> display value in all registers and intruction ptr\n";
+		std::cout << "getregs -> display value in all registers and intruction ptr\n";
 		std::cout << "tick -> run next instruction in vm\n";
-		std::cout << "getbreakpoints -> display all breakpoints\n";
-		std::cout << "clearbreakpoints -> clear all breakpoints\n";
+		std::cout << "getbps -> display all breakpoints\n";
+		std::cout << "clearbps -> clear all breakpoints\n";
 		std::cout << "setbp <address> -> set brakpoint at <address>\n";
 		std::cout << "clearbp <address> -> clear brakpoint at <address>\n";
 		std::cout << "reloadvm -> reload existing vm\n";
@@ -86,7 +86,7 @@ void console( virtual_machine_t & vm ) {
 		if( tokens.size( ) == 0 ) {
 			continue;
 		}
-		if( tokens[0] == "showmemory" ) {
+		if( tokens[0] == "showasm" ) {
 			uint16_t from_address = 0;
 			uint16_t to_address = std::numeric_limits<uint16_t>::max( );
 			if( tokens.size( ) > 1 ) {
@@ -98,9 +98,14 @@ void console( virtual_machine_t & vm ) {
 
 			full_dump( vm, from_address, to_address );
 			std::cout << "\n\n";
-		} else if( tokens[0] == "savememory" ) {
+		} else if( tokens[0] == "saveasm" ) {
 			std::ofstream fout;
-			auto const fname = generate_unique_file_name( "sc_", "_dump", "txt" );
+			std::string fname;
+			if( tokens.size( ) > 1 ) {
+				fname = current_line.substr( 10 );
+			} else {
+				fname = generate_unique_file_name( "sc_", "_asm", "txt" );
+			}
 			fout.open( fname.c_str( ) );
 			if( !fout ) {
 				std::cerr << "Error saving memory dump to " << fname << "\n";
@@ -163,16 +168,16 @@ void console( virtual_machine_t & vm ) {
 			std::cout << "Setting register " << addr << " with a value of " << value << "\n";
 			vm.registers[addr] = value;
 		} else if( tokens[0] == "tick" ) {
-			vm.tick( );
-		} else if( tokens[0] == "getregisters" ) {
+			vm.tick( true );
+		} else if( tokens[0] == "showregs" ) {
 			std::cout << "Current register values\n";
 			std::cout << dump_regs( vm ) << "\n";
-		} else if( tokens[0] == "getbreakpoints" ) {
+		} else if( tokens[0] == "getbps" ) {
 			std::cout << "Current breakpoints(" << vm.breakpoints.size( ) << ")\n";
 			for( auto const & bp : vm.breakpoints ) {
 				std::cout << bp << "\n";
 			}
-		} else if( tokens[0] == "clearbreakpoints" ) {
+		} else if( tokens[0] == "clearbps" ) {
 			std::cout << "Clearing " << vm.breakpoints.size( ) << " breakpoints\n";
 			vm.breakpoints.clear( );
 		} else if( tokens[0] == "setbp" ) {
@@ -206,9 +211,11 @@ void console( virtual_machine_t & vm ) {
 			vm.save_state( fname );
 			std::cout << "State saved to file '" << fname << "'\n";
 		} else if( tokens[0] == "loadstate" ) {
-			auto state_file = current_line.substr( 10 );			
+			auto state_file = current_line.substr( 10 );
 			vm.load_state( state_file );
 			std::cout << "Loaded state from file '" << state_file << "'\n";
+		} else if( tokens[0] == "showargstack" ) {
+		} else if( tokens[0] == "showprogstack" ) {
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );

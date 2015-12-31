@@ -47,7 +47,7 @@ struct virtual_machine_t {
 	virtual_machine_t( );
 	virtual_machine_t( boost::string_ref filename );
 
-	void tick( );
+	void tick( bool is_debugger = false );
 	uint16_t & get_register( uint16_t i );
 	static bool is_value( uint16_t i );
 	static bool is_register( uint16_t i );

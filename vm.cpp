@@ -162,8 +162,8 @@ void virtual_machine_t::load_state( boost::string_ref filename ) {
 }
 
 
-void virtual_machine_t::tick( ) {
-		if( should_break || breakpoints.count( instruction_ptr ) > 0 ) {
+void virtual_machine_t::tick( bool is_debugger ) {
+		if( !is_debugger && (should_break || breakpoints.count( instruction_ptr ) > 0) ) {
 			std::cout << "Breaking at address " << instruction_ptr << "\n";
 			console( *this );
 			should_break = false;			
