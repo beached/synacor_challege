@@ -30,10 +30,10 @@ namespace {
 	std::string epoch( ) {
 		using boost::posix_time::ptime;
 		using boost::posix_time::time_from_string;
-		static ptime const epoch = time_from_string("1970-01-01 00:00:00.000");
-		ptime other = time_from_string("2011-08-09 17:27:00.000");
+		static ptime const epoch = time_from_string( "1970-01-01 00:00:00.000" );
+		ptime other = time_from_string( "2011-08-09 17:27:00.000" );
 
-		return std::to_string( (other-epoch).total_milliseconds( ) );
+		return std::to_string( (other - epoch).total_milliseconds( ) );
 	}
 
 	void print_help( ) {
@@ -44,18 +44,25 @@ namespace {
 		std::cout << "quit -> exit program\n";
 	}
 
-
+	template<typename T>
+	T convert( boost::string_ref orig ) {
+		std::stringstream ss;
+		ss << orig;
+		T result;
+		ss >> result;
+		return result;
+	}
 }
 
 
 
 void console( virtual_machine_t & vm ) {
 	std::cin.clear( );
-	
+
 	print_help( );
 
 	std::string current_line;
-		while( std::getline( std::cin, current_line  ) ) {
+	while( std::getline( std::cin, current_line ) ) {
 		if( current_line == "printmemory" ) {
 			full_dump( vm );
 			std::cout << "\n\n";
@@ -76,6 +83,11 @@ void console( virtual_machine_t & vm ) {
 		} else if( current_line == "quit" ) {
 			std::cout << "Exiting Program\n\n\n";
 			exit( EXIT_SUCCESS );
+		} else if( current_line.substr( 0, 6 ) == "setip " ) {
+			auto new_ip = convert<uint16_t>( current_line.substr( 6 ) );
+			assert( new_ip < 32768 );
+			std::cout << "Setting instruction ptr to " << new_ip << "\n\n";
+			vm.instruction_ptr = new_ip;
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );
