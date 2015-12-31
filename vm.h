@@ -43,7 +43,7 @@ struct virtual_machine_t {
 	static uint16_t const REGISTER0 = 32768;
 
 	virtual_machine_t( );
-
+	void tick( );
 	uint16_t & get_register( uint16_t i, bool log7 = true );
 	static bool is_value( uint16_t i );
 	static bool is_register( uint16_t i );

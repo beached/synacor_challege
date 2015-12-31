@@ -38,6 +38,14 @@ virtual_machine_t::virtual_machine_t( ):
 	term_buff( ),
 	instruction_ptr( 0 ) { }
 
+void virtual_machine_t::tick( ) {
+		auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
+		for( size_t n = 0; n < decoded.arg_count; ++n ) {
+			argument_stack.push_back( fetch_opcode( ) );
+		}
+		decoded.instruction( *this );
+}
+
 uint16_t & virtual_machine_t::get_register( uint16_t i, bool log7 ) {
 	if( !is_register( i ) ) {
 		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;

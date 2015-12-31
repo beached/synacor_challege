@@ -67,11 +67,7 @@ int main( int argc, char** argv ) {
 	start_handler( );
 
 	while( true ) {		
-		auto const & decoded = instructions::decoder( )[vm.fetch_opcode( true )];
-		for( size_t n = 0; n < decoded.arg_count; ++n ) {
-			vm.argument_stack.push_back( vm.fetch_opcode( ) );
-		}
-		decoded.instruction( vm );
+		vm.tick( );
 		if( !should_break.test_and_set( ) ) {
 			vm.should_break = true;
 		}
