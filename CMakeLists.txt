@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(synacor_challenge)
 
-find_package(Boost 1.59.0 REQUIRED COMPONENTS iostreams system thread )
-set(Boost_Libs ${BOOST_Libraries} -lboost_iostreams -lboost_system -lboost_thread )
+find_package(Boost 1.59.0 REQUIRED COMPONENTS iostreams system thread date_time )
+set(Boost_Libs ${BOOST_Libraries} -lboost_iostreams -lboost_system -lboost_thread -lboost_date_time )
 set( COMPILER_SPECIFIC_LIBS )
 MESSAGE( WARNING "Current Compiler:" ${CMAKE_CXX_COMPILER_ID} )
 IF( ${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC" )
@@ -28,6 +28,8 @@ set( SOURCE_FILES
 	memory_helper.h
 	vm.h
 	vm.cpp
+	console.cpp
+	console.h
 )
 
 include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )

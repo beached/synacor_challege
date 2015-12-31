@@ -33,10 +33,14 @@
 
 static std::atomic_flag should_break = ATOMIC_FLAG_INIT;
 static boost::asio::io_service io;
-static boost::asio::signal_set signals(io, SIGINT, SIGTERM);
+static boost::asio::signal_set signals(io, SIGINT);
 
 void handler( boost::asio::signal_set& this_, boost::system::error_code error, int signal_number ) {
 	if( !error ) {
+		if( !should_break.test_and_set( ) ) {
+			std::cout << "EXITING" << std::endl;
+			exit( EXIT_SUCCESS );
+		}
 		should_break.clear( );
 		this_.async_wait(boost::bind(handler, boost::ref(this_), _1, _2));
 	}

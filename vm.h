@@ -53,9 +53,10 @@ struct virtual_machine_t {
 	uint16_t pop_argument_stack( );	
 	uint16_t pop_program_stack( );
 	uint16_t fetch_opcode( bool is_instruction = false );
-	void full_dump( virtual_machine_t & vm );
 };	// struct virtual_machine_t
 
+std::string full_dump_string( virtual_machine_t & vm );
+void full_dump( virtual_machine_t & vm );
 
 namespace instructions {
 	void inst_halt( virtual_machine_t & );

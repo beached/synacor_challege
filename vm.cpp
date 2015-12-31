@@ -23,9 +23,11 @@
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <cstdio>
 
 #include <vector>
 #include "vm.h"
+#include "console.h"
 
 virtual_machine_t::virtual_machine_t( ):
 	registers( ),
@@ -113,15 +115,21 @@ uint16_t virtual_machine_t::fetch_opcode( bool is_instruction ) {
 	return current_instruction;
 }
 
-void full_dump( virtual_machine_t & vm ) {
-	std::cerr << dump_memory( vm, [&]( size_t i ) {
+std::string full_dump_string( virtual_machine_t & vm ) {
+	std::stringstream ss;
+	ss << dump_memory( vm, [&]( size_t i ) {
 		return  instructions::decoder( )[i];
 	} );
-	std::cerr << "\n\nInstruction Ptr: " << vm.instruction_ptr << "\n";
-	std::cerr << "Registers\n";
+	ss << "\n\nInstruction Ptr: " << vm.instruction_ptr << "\n";
+	ss << "Registers\n";
 	for( uint16_t n=0; n<vm.registers.size( ); ++n ) {
-		std::cout << "R" << n << ": " << static_cast<int>( vm.registers[n] ) << "\n";
+		ss << "R" << n << ": " << static_cast<int>( vm.registers[n] ) << "\n";
 	}
+	return ss.str( );
+}
+
+void full_dump( virtual_machine_t & vm ) {
+	std::cout << full_dump_string( vm );
 }
 
 namespace instructions {
@@ -269,16 +277,18 @@ namespace instructions {
 	void inst_in( virtual_machine_t & vm ) {
 		auto a = vm.pop_argument_stack( );
 
-		auto tmp = vm.term_buff.get( );
-		if( tmp == 0 ) {
+		auto tmp = getchar( );
+		if( tmp < 0 ) {
 			vm.should_break = true;
-			tmp = vm.term_buff.get( );
 		}
 		if( vm.should_break ) {
-			full_dump( vm );
+			vm.should_break = false;
+			console( vm );	
 			vm.should_break = false;
 		}
-
+		if( tmp < 0 ) {
+			tmp = '\n';
+		}
 		vm.get_reg_or_mem( a ) = static_cast<uint16_t>(tmp);
 	}
 
