@@ -106,3 +106,4 @@ namespace instructions {
 bool is_alphanum( uint16_t i );
 
 std::string dump_memory( virtual_machine_t & vm, uint16_t from_address = 0, uint16_t to_address = std::numeric_limits<uint16_t>::max( ) );
+

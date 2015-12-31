@@ -35,7 +35,9 @@ namespace {
 		return std::to_string( (other - epoch).total_milliseconds( ) );
 	}
 }
+
 std::string generate_unique_file_name( boost::string_ref prefix, boost::string_ref suffix, boost::string_ref extension ) {
 	std::string result = prefix.to_string() + epoch( ) + suffix.to_string() + "." + extension.to_string();
 	return result;
 }
+

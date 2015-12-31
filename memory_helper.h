@@ -50,11 +50,6 @@ public:
 	virtual_memory_t & operator=( virtual_memory_t const & ) = default;
 	virtual_memory_t & operator=( virtual_memory_t && ) = default;
 
-	virtual_memory_t( boost::string_ref filename ): m_memory { } {
-		zero_fill( m_memory );
-		from_file( filename );
-	}
-
 	iterator begin( ) {
 		return m_memory.begin( );
 	}

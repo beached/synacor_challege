@@ -32,7 +32,7 @@ enum class ContainerFileStates { OPEN, ERROR, CLOSED };
 template<typename T>
 struct ReadOnlyFileAsContainer {
 	using storage_type = container_conversion<T const>;	
-	using value_type = typename T;
+	using value_type = T;
 	using iterator = typename storage_type::iterator;
 	using const_iterator = typename storage_type::const_iterator;
 	using reference = typename storage_type::reference;
@@ -45,7 +45,7 @@ private:
 
 public:
 	ReadOnlyFileAsContainer( boost::string_ref filename, size_t items = (boost::iostreams::mapped_file::max_length / sizeof( value_type )), boost::intmax_t offset = 0 ):
-		m_mapped_file( filename.data( ), items*sizeof( value_type ), offset ),
+		m_mapped_file( filename.data( ), items*sizeof(value_type), offset ),
 		m_file_data( ), 
 		m_state( ContainerFileStates::ERROR ) {
 		if( !m_mapped_file.is_open( ) ) {
@@ -131,7 +131,7 @@ public:
 template<typename T>
 struct FileAsContainer {
 	using storage_type = container_conversion<T>;
-	using value_type = typename T;
+	using value_type = T;
 	using iterator = typename storage_type::iterator;
 	using const_iterator = typename storage_type::const_iterator;
 	using reference = typename storage_type::reference;
@@ -144,7 +144,7 @@ private:
 
 public:
 	FileAsContainer( boost::string_ref filename, size_t items = (boost::iostreams::mapped_file::max_length/sizeof(value_type)), boost::intmax_t offset = 0 ):
-		m_mapped_file( filename.data( ), items*sizeof(value_type), offset ),
+		m_mapped_file( filename.data( ), std::ios_base::in | std::ios_base::out, items*sizeof(value_type), offset ),
 		m_file_data( ),
 		m_state( ContainerFileStates::OPEN ) {
 		if( !m_mapped_file.is_open( ) ) {
