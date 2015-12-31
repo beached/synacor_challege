@@ -80,7 +80,6 @@ void virtual_machine_t::save_state( boost::string_ref filename ) {
 	// Should be compatible with contest file format as it just extends it.  Anything less than
 	// or equal to 32767 items is only representing the memory and assumes zeros for unused 
 	// space and all registers/stacks.  Otherwise it will be a full state dump as here
-	clear( );
 	auto const total_items = memory.size( ) + registers.size( ) + 1/*instruction_ptr*/
 		+ 1/*program stack size*/ + program_stack.size( )
 		+ 1/*argument stack size*/ + argument_stack.size( );
