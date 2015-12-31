@@ -36,9 +36,40 @@ virtual_machine_t::virtual_machine_t( ):
 	program_stack( ),
 	should_break( false ),
 	term_buff( ),
-	instruction_ptr( 0 ) { }
+	instruction_ptr( 0 ),
+	breakpoints( ),
+	vm_file( ) {
+	
+	zero_fill( registers );
+	zero_fill( memory );
+}
+
+virtual_machine_t::virtual_machine_t( boost::string_ref filename ):
+	registers( ),
+	memory( ),
+	argument_stack( ),
+	program_stack( ),
+	should_break( false ),
+	term_buff( ),
+	instruction_ptr( 0 ),
+	breakpoints( ),
+	vm_file( filename ) {
+	
+	load( filename );
+}
+
+void virtual_machine_t::load( boost::string_ref filename ) {
+	zero_fill( registers );
+	zero_fill( memory );
+	instruction_ptr = 0;
+	memory.from_file( filename );
+}
 
 void virtual_machine_t::tick( ) {
+		if( breakpoints.count( instruction_ptr ) > 0 ) {
+			std::cout << "Breakpoint hit at address " << instruction_ptr << "\n";
+			console( *this );
+		}
 		auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
 			argument_stack.push_back( fetch_opcode( ) );

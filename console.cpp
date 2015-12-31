@@ -51,6 +51,11 @@ namespace {
 		std::cout << "setreg <0-7> <value> -> set the register <0-7> to <value>\n";
 		std::cout << "getregisters -> display value in all registers and intruction ptr\n";
 		std::cout << "tick -> run next instruction in vm\n";
+		std::cout << "getbreakpoints -> display all breakpoints\n";
+		std::cout << "clearbreakpoints -> clear all breakpoints\n";
+		std::cout << "setbp <address> -> set brakpoint at <address>\n";
+		std::cout << "clearbp <address> -> clear brakpoint at <address>\n";
+		std::cout << "reloadvm -> reload existing vm\n";
 		std::cout << "\n";
 	}
 
@@ -153,6 +158,35 @@ void console( virtual_machine_t & vm ) {
 				std::cout << "REG" << n << ": " << vm.registers[n] << "\n";
 			}
 			std::cout << "Instruction ptr: " << vm.instruction_ptr << "\n";
+		} else if( tokens[0] == "getbreakpoints" ) {
+			std::cout << "Current breakpoints(" << vm.breakpoints.size( ) << ")\n";
+			for( auto const & bp : vm.breakpoints ) {
+				std::cout << bp << "\n";
+			}
+		} else if( tokens[0] == "clearbreakpoints" ) {
+			std::cout << "Clearing " << vm.breakpoints.size( ) << " breakpoints\n";
+			vm.breakpoints.clear( );
+		} else if( tokens[0] == "setbp" ) {
+			if( tokens.size( ) != 2 ) {
+				std::cout << "Error\n";
+				continue;
+			}
+			auto addr = convert<uint16_t>( tokens[1] );
+			std::cout << "Setting breakpoint at " << addr << "\n";	
+			assert( addr < vm.memory.size( ) );
+			vm.breakpoints.insert( addr );
+		} else if( tokens[0] == "clearbp" ) {
+			if( tokens.size( ) != 2 ) {
+				std::cout << "Error\n";
+				continue;
+			}
+			auto addr = convert<uint16_t>( tokens[1] );
+			std::cout << "Clear breakpoint at " << addr << "\n";	
+			assert( addr < vm.memory.size( ) );
+			vm.breakpoints.erase( addr );
+		} else if( tokens[0] == "reloadvm" ) {
+			std::cout << "Reloading vm from '" << vm.vm_file << "'\n";
+			vm.load( vm.vm_file );			
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );

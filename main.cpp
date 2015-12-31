@@ -53,16 +53,11 @@ void start_handler( ) {
 }
 
 int main( int argc, char** argv ) {
-	virtual_machine_t vm;
-	zero_fill( vm.registers );
-	zero_fill( vm.memory );
-	vm.instruction_ptr = 0;
-
 	if( argc <= 1 ) {
 		std::cerr << "Must supply a vm file" << std::endl;
 		exit( EXIT_FAILURE );
 	}
-	vm.memory.from_file( argv[1] );
+	virtual_machine_t vm( argv[1] );
 
 	start_handler( );
 

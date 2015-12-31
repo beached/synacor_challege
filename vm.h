@@ -26,6 +26,7 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
+#include <set>
 #include "helpers.h"
 #include "memory_helper.h"
 
@@ -35,14 +36,17 @@ struct virtual_machine_t {
 	std::vector<uint16_t> argument_stack;
 	std::vector<uint16_t> program_stack;
 	bool should_break;
-
 	term_buff_t term_buff;
 	uint16_t instruction_ptr;
+	std::set<uint16_t> breakpoints;
+	std::string vm_file;
 
 	static uint16_t const MODULO = 32768;
 	static uint16_t const REGISTER0 = 32768;
 
 	virtual_machine_t( );
+	virtual_machine_t( boost::string_ref filename );
+
 	void tick( );
 	uint16_t & get_register( uint16_t i, bool log7 = true );
 	static bool is_value( uint16_t i );
@@ -53,6 +57,7 @@ struct virtual_machine_t {
 	uint16_t pop_argument_stack( );	
 	uint16_t pop_program_stack( );
 	uint16_t fetch_opcode( bool is_instruction = false );
+	void load( boost::string_ref filename );
 };	// struct virtual_machine_t
 
 std::string full_dump_string( virtual_machine_t & vm );
