@@ -35,18 +35,27 @@ namespace {
 
 		return std::to_string( (other-epoch).total_milliseconds( ) );
 	}
+
+	void print_help( ) {
+		std::cout << "Debugging console\nValid commmands are:\n";
+		std::cout << "savememory -> save memory to a file(sc_<time since epoch>_dump.txt)\n";
+		std::cout << "printmemory -> print all memory to screen\n";
+		std::cout << "exit -> exit debugger\n";
+		std::cout << "quit -> exit program\n";
+	}
+
+
 }
+
+
 
 void console( virtual_machine_t & vm ) {
 	std::cin.clear( );
-	std::cout << "Debugging console\nValid commmands are:\n";
-	std::cout << "savememory -> save memory to a file(sc_<time since epoch>_dump.txt)\n";
-	std::cout << "printmemory -> print all memory to screen\n";
-	std::cout << "exit -> exit debugger\n";
-	std::cout << "quit -> exit program\n";
+	
+	print_help( );
 
 	std::string current_line;
-	while( std::getline( std::cin, current_line  ) ) {
+		while( std::getline( std::cin, current_line  ) ) {
 		if( current_line == "printmemory" ) {
 			full_dump( vm );
 			std::cout << "\n\n";
@@ -63,9 +72,13 @@ void console( virtual_machine_t & vm ) {
 			}
 		} else if( current_line == "exit" ) {
 			std::cout << "Exiting Debugger\n\n\n";
+			return;
 		} else if( current_line == "quit" ) {
 			std::cout << "Exiting Program\n\n\n";
 			exit( EXIT_SUCCESS );
+		} else {
+			std::cout << "ERROR\n\n";
+			print_help( );
 		}
 	}
 
