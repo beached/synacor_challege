@@ -129,7 +129,7 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 		} else if( virtual_machine_t::is_register( i ) ) {
 			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i, false ) << ")";
 		} else if( i < virtual_machine_t::REGISTER0 ) {
-			ss << "DATA(" << static_cast<int>(i) << ")";
+			ss << static_cast<int>(i);
 		} else {
 			ss << "INVALID(" << static_cast<int>(i) << ")";
 		}
