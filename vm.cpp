@@ -166,8 +166,8 @@ void virtual_machine_t::tick( bool is_debugger ) {
 		if( !is_debugger && (should_break || breakpoints.count( instruction_ptr ) > 0) ) {
 			std::cout << "Breaking at address " << instruction_ptr << "\n";
 			console( *this );
-			should_break = false;			
 		}
+		should_break = false;
 		auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
 		for( size_t n = 0; n < decoded.arg_count; ++n ) {
 			argument_stack.push_back( fetch_opcode( ) );
@@ -494,7 +494,6 @@ namespace instructions {
 			vm.should_break = true;
 		}
 		if( vm.should_break ) {
-			vm.should_break = false;
 			console( vm );	
 			vm.should_break = false;
 		}

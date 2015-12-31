@@ -32,8 +32,8 @@ namespace {
 		std::cout << "Debugging console\nValid commmands are:\n";
 		std::cout << "saveasm [filename] -> save assembly of memory to to [filename] or sc_<time since epoch>_asm.txt if not specified\n";
 		std::cout << "showasm [from_address] [to_address] -> print all memory to screen\n";
-		std::cout << "continue -> continue program\n";
-		std::cout << "quit -> exit program\n";
+		std::cout << "go -> Resume program\n";
+		std::cout << "quit -> Exit program\n";
 		std::cout << "getip -> print current instruction ptr value\n";
 		std::cout << "setip <address> -> set the instruction ptr value to <address>\n";
 		std::cout << "getmem <address> -> print current memory value at <address>\n";
@@ -116,8 +116,9 @@ void console( virtual_machine_t & vm ) {
 				fout.close( );
 				std::cout << "Saved file to " << fname << "\n";
 			}
-		} else if( tokens[0] == "continue" ) {
-			std::cout << "Continuing program\n\n";
+		} else if( tokens[0] == "go" ) {
+			std::cout << "Resuming program\n\n";
+			vm.should_break = false;
 			return;
 		} else if( tokens[0] == "quit" ) {
 			std::cout << "Exiting Program\n\n\n";

@@ -35,18 +35,8 @@ static std::atomic_flag should_break = ATOMIC_FLAG_INIT;
 static boost::asio::io_service io;
 static boost::asio::signal_set signals(io, SIGINT);
 
-void handler( boost::asio::signal_set& this_, boost::system::error_code error, int signal_number ) {
-	if( !error ) {
-		if( !should_break.test_and_set( ) ) {
-			std::cout << "EXITING" << std::endl;
-			exit( EXIT_SUCCESS );
-		}
-		should_break.clear( );
-		this_.async_wait(boost::bind(handler, boost::ref(this_), _1, _2));
-	}
-}
-
-void start_handler( ) {
+template<typename Handler>
+void start_handler( Handler handler ) {
 	should_break.test_and_set( );
 	signals.async_wait(boost::bind(handler, boost::ref(signals), _1, _2));
 	boost::thread(boost::bind(&boost::asio::io_service::run, boost::ref(io))).detach( );
@@ -59,7 +49,22 @@ int main( int argc, char** argv ) {
 	}
 	virtual_machine_t vm( argv[1] );
 
-	start_handler( );
+	std::function<void( boost::asio::signal_set&, boost::system::error_code, int )> handler;
+
+	handler = [&]( boost::asio::signal_set& this_, boost::system::error_code error, int signal_number ) {
+		if( !error ) {
+			if( !should_break.test_and_set( ) ) {
+				std::cout << "EXITING" << std::endl;
+				exit( EXIT_SUCCESS );
+			}
+			if( !vm.should_break ) {
+				should_break.clear( );
+			}
+			this_.async_wait( boost::bind( handler, boost::ref( this_ ), _1, _2 ) );
+		}
+	};
+	start_handler( handler );
+	
 
 	while( true ) {		
 		vm.tick( );
