@@ -56,7 +56,7 @@ virtual_machine_t::virtual_machine_t( boost::string_ref filename ):
 	breakpoints( ),
 	vm_file( filename.to_string( ) ) {
 	
-	load( filename.to_string( ) );
+	load_state( vm_file );
 }
 
 void virtual_machine_t::clear( ) { 
@@ -65,20 +65,6 @@ void virtual_machine_t::clear( ) {
 	program_stack.clear( );
 	argument_stack.clear( );
 	instruction_ptr = 0;
-}
-
-void virtual_machine_t::load( std::string filename ) {
-	vm_file = std::move( filename );
-	clear( );
-	ReadOnlyFileAsContainer<uint16_t> f( vm_file );
-	if( !f ) {
-		std::cerr << "Error opening file: " << vm_file << std::endl;
-		exit( EXIT_FAILURE );
-	} else if( f.size( ) > memory.size( ) ) {
-		std::cerr << "VM File does not have the correct size.  It is " << f.size( ) << " bytes, which is > " << memory.size( ) << "bytes" << std::endl;
-		exit( EXIT_FAILURE );
-	}
-	std::copy( f.begin( ), f.end( ), memory.begin( ) );	
 }
 
 void virtual_machine_t::save_state( boost::string_ref filename ) {
@@ -98,7 +84,7 @@ void virtual_machine_t::save_state( boost::string_ref filename ) {
 	auto const total_items = memory.size( ) + registers.size( ) + 1/*instruction_ptr*/
 		+ 1/*program stack size*/ + program_stack.size( )
 		+ 1/*argument stack size*/ + argument_stack.size( );
-	FileAsContainer<uint16_t> f( filename, total_items );
+	FileAsContainer<uint16_t> f( filename, total_items, 0, true );
 	if( !f ) {
 		std::cerr << "Error opening file: " << filename << std::endl;
 		exit( EXIT_FAILURE );
@@ -113,9 +99,67 @@ void virtual_machine_t::save_state( boost::string_ref filename ) {
 
 	*output_position = static_cast<uint16_t>(argument_stack.size( ));
 	++output_position;
-	output_position = std::copy( argument_stack.begin( ), argument_stack.end( ), output_position );
+	std::copy( argument_stack.begin( ), argument_stack.end( ), output_position );
 	f.close( );
 }
+
+
+void virtual_machine_t::load_state( boost::string_ref filename ) {
+	// Format of file in uint16_t's.  So 2bytes per 
+	// 0->32767 -> memory from 0->32767
+	// 32768->32775 -> registers 0->7
+	// 32776 -> instruction ptr
+	// 32777 -> size of program stack
+	// 32778->32778+[32777] -> program stack
+	// 32778+[32777]+1 -> size of argument stack
+	// 32778+[32777]+2->end -> argument stack
+
+	// Should be compatible with contest file format as it just extends it.  Anything less than
+	// or equal to 32767 items is only representing the memory and assumes zeros for unused 
+	// space and all registers/stacks.  Otherwise it will be a full state dump as here
+	clear( );
+	ReadOnlyFileAsContainer<uint16_t> f( filename );
+	if( !f ) {
+		std::cerr << "Error opening file: " << filename << std::endl;
+		exit( EXIT_FAILURE );
+	}
+
+	size_t offset = 0;
+
+	auto get_it = [&f, &offset]( ) {
+		return f.begin( ) + offset;
+	};
+
+	{
+		auto memory_size = f.size( ) > 32768 ? 32768 : f.size( );
+		std::copy( f.begin( ), f.begin( ) + memory_size, memory.begin( ) );
+		offset += memory.size( );
+	}
+	if( f.size( ) > 32768 ) {	// Has more than memory
+		{
+			auto it = get_it( );
+			std::copy( it, it + registers.size( ), registers.begin( ) );
+			offset += registers.size( );
+		}
+		instruction_ptr = *get_it( );
+		++offset;
+		{
+			size_t program_stack_size = *get_it( );
+			++offset;
+			auto it = get_it( );
+			std::copy( it, it + program_stack_size, program_stack.begin( ) ); 
+			offset += program_stack.size( );
+		}
+		{
+			size_t argument_stack_size = *get_it( );
+			++offset;
+			auto it = get_it( );
+			std::copy( it, it + argument_stack_size, argument_stack.begin( ) ); 
+		}
+	}
+	f.close( );
+}
+
 
 void virtual_machine_t::tick( ) {
 		if( should_break || breakpoints.count( instruction_ptr ) > 0 ) {

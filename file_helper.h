@@ -44,8 +44,19 @@ private:
 	ContainerFileStates m_state;
 
 public:
-	ReadOnlyFileAsContainer( boost::string_ref filename, size_t items = (boost::iostreams::mapped_file::max_length / sizeof( value_type )), boost::intmax_t offset = 0 ):
-		m_mapped_file( filename.data( ), items*sizeof(value_type), offset ),
+	ReadOnlyFileAsContainer( boost::string_ref filename ):
+		m_mapped_file( filename.data( ) ),
+		m_file_data( ), 
+		m_state( ContainerFileStates::ERROR ) {
+		if( !m_mapped_file.is_open( ) ) {
+			return;
+		}
+		m_state = ContainerFileStates::OPEN;
+		m_file_data = std::make_unique<storage_type>( m_mapped_file.data( ), m_mapped_file.data( ) + m_mapped_file.size( ) );
+	}
+
+	ReadOnlyFileAsContainer( boost::string_ref filename, size_t items, boost::intmax_t offset = 0 ):
+		m_mapped_file( filename.data( ), items*sizeof( value_type ), offset ),
 		m_file_data( ), 
 		m_state( ContainerFileStates::ERROR ) {
 		if( !m_mapped_file.is_open( ) ) {
@@ -64,42 +75,42 @@ public:
 	}
 
 	size_t size( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->size( );
 	}
 
 	const_iterator begin( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->begin( );
 	}
 
 	const_iterator cbegin( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->begin( );
 	}
 
 	const_iterator end( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->end( );
 	}
 
 	const_iterator cend( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->end( );
 	}
 
 	const_reference operator[]( size_t pos ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return (*m_file_data)[pos];
@@ -107,7 +118,7 @@ public:
 
 	const_reference at( size_t pos ) const {
 		assert( pos < size( ) );
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return (*m_file_data)[pos];
@@ -143,8 +154,18 @@ private:
 	ContainerFileStates m_state;
 
 public:
-	FileAsContainer( boost::string_ref filename, size_t items = (boost::iostreams::mapped_file::max_length/sizeof(value_type)), boost::intmax_t offset = 0 ):
-		m_mapped_file( filename.data( ), std::ios_base::in | std::ios_base::out, items*sizeof(value_type), offset ),
+	FileAsContainer( boost::string_ref filename, size_t items, boost::intmax_t offset = 0, bool create = false ):
+		m_mapped_file( [&]( ){
+			boost::iostreams::mapped_file_params result( filename.to_string( ) );
+			result.flags = boost::iostreams::mapped_file::mapmode::readwrite;
+			result.offset = offset;
+			if( create ) {
+				result.new_file_size = static_cast<boost::iostreams::stream_offset>(items*sizeof( value_type ));
+			} else {
+				result.length = items*sizeof( value_type );
+			}
+			return result;
+		}( )),
 		m_file_data( ),
 		m_state( ContainerFileStates::OPEN ) {
 		if( !m_mapped_file.is_open( ) ) {
@@ -163,56 +184,56 @@ public:
 	}
 
 	size_t size( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->size( );
 	}
 
 	iterator begin( ) {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->begin( );
 	}
 
 	const_iterator begin( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->begin( );
 	}
 
 	const_iterator cbegin( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->begin( );
 	}
 
 	iterator end( ) {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->end( );
 	}
 
 	const_iterator end( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->end( );
 	}
 
 	const_iterator cend( ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return m_file_data->end( );
 	}
 
 	reference operator[]( size_t pos ) {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return (*m_file_data)[pos];
@@ -220,7 +241,7 @@ public:
 
 
 	const_reference operator[]( size_t pos ) const {
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return (*m_file_data)[pos];
@@ -228,7 +249,7 @@ public:
 
 	reference at( size_t pos ) {
 		assert( pos < size( ) );
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return (*m_file_data)[pos];
@@ -237,7 +258,7 @@ public:
 
 	const_reference at( size_t pos ) const {
 		assert( pos < size( ) );
-		if( is_open( ) ) {
+		if( !is_open( ) ) {
 			throw std::runtime_error( "Attempt to access null data" );
 		}
 		return (*m_file_data)[pos];
@@ -257,6 +278,7 @@ public:
 		return m_state == ContainerFileStates::OPEN;
 	}
 
-};	// struct WriteFileAsContainer
+};	// struct FileAsContainer
 
 std::string generate_unique_file_name( boost::string_ref prefix = "", boost::string_ref suffix = "", boost::string_ref extension = "" );
+

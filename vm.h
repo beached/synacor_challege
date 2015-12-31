@@ -57,8 +57,8 @@ struct virtual_machine_t {
 	uint16_t pop_argument_stack( );	
 	uint16_t pop_program_stack( );
 	uint16_t fetch_opcode( bool is_instruction = false );
-	void load( std::string filename );
 	void save_state( boost::string_ref filename );
+	void load_state( boost::string_ref filename );
 	void clear( );
 
 };	// struct virtual_machine_t
