@@ -41,9 +41,7 @@ int main( int argc, char** argv ) {
 	}
 	vm.memory.from_file( argv[1] );
 
-	std::cout << dump_memory( vm, [&]( size_t i ) {
-		return  instructions::decoder( )[i];
-	} ) << std::endl;
+	std::cout << dump_memory( vm ) << std::endl;
 
 	return EXIT_SUCCESS;
 }

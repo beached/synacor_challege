@@ -157,11 +157,89 @@ uint16_t virtual_machine_t::fetch_opcode( bool is_instruction ) {
 	return current_instruction;
 }
 
-std::string full_dump_string( virtual_machine_t & vm ) {
+std::string dump_memory( virtual_machine_t & vm, uint16_t from_address, uint16_t to_address ) {
+	if( to_address > vm.memory.size( ) ) {
+		to_address = static_cast<uint16_t>(vm.memory.size( ));
+	}
+	if( from_address > to_address ) {
+		from_address = to_address;
+	}
 	std::stringstream ss;
-	ss << dump_memory( vm, [&]( size_t i ) {
-		return  instructions::decoder( )[i];
-	} );
+
+	auto get_mem = [&]( auto & addr, bool inc = true ) {
+		if( addr >= vm.memory.size( ) ) {
+			std::cerr << ss.str( ) << std::endl << std::endl;
+			std::cerr << "UNEXPECTED END OF MEMORY\n" << std::endl;
+			exit( EXIT_FAILURE );
+		}
+		if( inc ) {
+			++addr;
+			return vm.memory[addr - 1];
+		}
+		return vm.memory[addr];
+	};
+
+	auto escape = []( int i ) {
+		std::string str = std::to_string( i );
+		while( str.size( ) < 3 ) {
+			str = "0" + str;
+		}
+		str = "\\" + str;
+		return str;
+	};
+
+	auto mem_to_str = [&]( auto i, bool raw_ascii = false ) {
+		if( raw_ascii ) {
+			if( is_alphanum( i ) ) {
+				ss << static_cast<unsigned char>(i);
+			} else {
+				ss << escape( i );
+			}
+		} else if( virtual_machine_t::is_register( i ) ) {
+			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i ) << ")";
+		} else if( i < virtual_machine_t::REGISTER0 ) {
+			ss << static_cast<int>(i);
+		} else {
+			ss << "INVALID(" << static_cast<int>(i) << ")";
+		}
+	};
+
+	for( auto addr = from_address; addr < to_address; ++addr ) {
+		ss << addr << ": ";
+		auto val = get_mem( addr );
+		auto const & decoder = instructions::decoder( );
+		if( instructions::is_instruction( val ) ) {
+			auto d = decoder[val];
+			ss << d.name;
+			if( val == 19/*OUT*/ ) {
+				ss << " \"";
+				do {
+					mem_to_str( get_mem( addr ), true );
+					val = get_mem( addr, false );
+					if( val == 19 ) {
+						++addr;
+					}
+				} while( val == 19 );
+				ss << "\"";
+			} else {
+				for( size_t n = 0; n < d.arg_count; ++n ) {
+					ss << "  ";
+					mem_to_str( get_mem( addr ) );
+				}
+			}
+		} else {
+			mem_to_str( val );
+		}
+		--addr;
+		ss << "\n";
+	}
+	return ss.str( );
+}
+
+
+std::string full_dump_string( virtual_machine_t & vm, uint16_t from_address, uint16_t to_address ) {
+	std::stringstream ss;
+	ss << dump_memory( vm, from_address, to_address );
 	ss << "\n\nInstruction Ptr: " << vm.instruction_ptr << "\n";
 	ss << "Registers\n";
 	for( uint16_t n=0; n<vm.registers.size( ); ++n ) {
@@ -170,8 +248,8 @@ std::string full_dump_string( virtual_machine_t & vm ) {
 	return ss.str( );
 }
 
-void full_dump( virtual_machine_t & vm ) {
-	std::cout << full_dump_string( vm );
+void full_dump( virtual_machine_t & vm, uint16_t from_address, uint16_t to_address ) {
+	std::cout << full_dump_string( vm, from_address, to_address );
 }
 
 namespace instructions {

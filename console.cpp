@@ -40,7 +40,7 @@ namespace {
 	void print_help( ) {
 		std::cout << "Debugging console\nValid commmands are:\n";
 		std::cout << "savememory -> save memory to a file(sc_<time since epoch>_dump.txt)\n";
-		std::cout << "printmemory -> print all memory to screen\n";
+		std::cout << "showmemory [from_address] [to_address] -> print all memory to screen\n";
 		std::cout << "continue -> continue program\n";
 		std::cout << "quit -> exit program\n";
 		std::cout << "getip -> print current instruction ptr value\n";
@@ -67,8 +67,16 @@ namespace {
 		ss >> result;
 		return result;
 	}
-}
 
+	std::string dump_regs( virtual_machine_t & vm ) {
+		std::stringstream ss;
+		for( size_t n = 0; n < vm.registers.size( ); ++n ) {
+			ss << "REG" << n << ": " << vm.registers[n] << "\n";
+		}
+		ss << "Instruction ptr: " << vm.instruction_ptr << "\n";
+		return ss.str( );
+	}
+}
 
 
 void console( virtual_machine_t & vm ) {
@@ -78,13 +86,24 @@ void console( virtual_machine_t & vm ) {
 
 	std::string current_line;
 	std::vector<std::string> tokens;
+
+	std::cout << "READY\n";
 	while( std::getline( std::cin, current_line ) ) {
-		boost::split( tokens, current_line, boost::is_any_of("\t "));
+		boost::split( tokens, current_line, boost::is_any_of( "\t " ) );
 		if( tokens.size( ) == 0 ) {
 			continue;
 		}
-		if( tokens[0] == "printmemory" ) {
-			full_dump( vm );
+		if( tokens[0] == "showmemory" ) {
+			uint16_t from_address = 0;
+			uint16_t to_address = std::numeric_limits<uint16_t>::max( );
+			if( tokens.size( ) > 1 ) {
+				from_address = convert<uint16_t>( tokens[1] );
+			}
+			if( tokens.size( ) > 2 ) {
+				to_address = convert<uint16_t>( tokens[2] );
+			}
+
+			full_dump( vm, from_address, to_address );
 			std::cout << "\n\n";
 		} else if( tokens[0] == "savememory" ) {
 			std::ofstream fout;
@@ -121,7 +140,7 @@ void console( virtual_machine_t & vm ) {
 			}
 			auto addr = convert<uint16_t>( tokens[1] );
 			assert( addr < vm.memory.size( ) );
-			std::cout << "Memory at address " << addr << " has a value of " << vm.memory[addr] << "\n"; 
+			std::cout << "Memory at address " << addr << " has a value of " << vm.memory[addr] << "\n";
 		} else if( tokens[0] == "setmem" ) {
 			if( tokens.size( ) != 3 ) {
 				std::cout << "Error\n";
@@ -130,7 +149,7 @@ void console( virtual_machine_t & vm ) {
 			auto addr = convert<uint16_t>( tokens[1] );
 			auto value = convert<uint16_t>( tokens[2] );
 			assert( addr < vm.memory.size( ) );
-			std::cout << "Setting memory at address " << addr << " has with a value of " << value << "\n"; 
+			std::cout << "Setting memory at address " << addr << " has with a value of " << value << "\n";
 			vm.memory[addr] = value;
 		} else if( tokens[0] == "getreg" ) {
 			if( tokens.size( ) != 2 ) {
@@ -139,7 +158,7 @@ void console( virtual_machine_t & vm ) {
 			}
 			auto addr = convert<uint16_t>( tokens[1] );
 			assert( addr < vm.registers.size( ) );
-			std::cout << "Register " << addr << " has a value of " << vm.registers[addr] << "\n"; 
+			std::cout << "Register " << addr << " has a value of " << vm.registers[addr] << "\n";
 		} else if( tokens[0] == "setreg" ) {
 			if( tokens.size( ) != 3 ) {
 				std::cout << "Error\n";
@@ -148,16 +167,13 @@ void console( virtual_machine_t & vm ) {
 			auto addr = convert<uint16_t>( tokens[1] );
 			auto value = convert<uint16_t>( tokens[2] );
 			assert( addr < vm.registers.size( ) );
-			std::cout << "Setting register " << addr << " with a value of " << value << "\n"; 
+			std::cout << "Setting register " << addr << " with a value of " << value << "\n";
 			vm.registers[addr] = value;
 		} else if( tokens[0] == "tick" ) {
 			vm.tick( );
 		} else if( tokens[0] == "getregisters" ) {
 			std::cout << "Current register values\n";
-			for( size_t n=0; n<vm.registers.size( ); ++n ) {
-				std::cout << "REG" << n << ": " << vm.registers[n] << "\n";
-			}
-			std::cout << "Instruction ptr: " << vm.instruction_ptr << "\n";
+			std::cout << dump_regs( vm ) << "\n";
 		} else if( tokens[0] == "getbreakpoints" ) {
 			std::cout << "Current breakpoints(" << vm.breakpoints.size( ) << ")\n";
 			for( auto const & bp : vm.breakpoints ) {
@@ -172,7 +188,7 @@ void console( virtual_machine_t & vm ) {
 				continue;
 			}
 			auto addr = convert<uint16_t>( tokens[1] );
-			std::cout << "Setting breakpoint at " << addr << "\n";	
+			std::cout << "Setting breakpoint at " << addr << "\n";
 			assert( addr < vm.memory.size( ) );
 			vm.breakpoints.insert( addr );
 		} else if( tokens[0] == "clearbp" ) {
@@ -181,16 +197,16 @@ void console( virtual_machine_t & vm ) {
 				continue;
 			}
 			auto addr = convert<uint16_t>( tokens[1] );
-			std::cout << "Clear breakpoint at " << addr << "\n";	
+			std::cout << "Clear breakpoint at " << addr << "\n";
 			assert( addr < vm.memory.size( ) );
 			vm.breakpoints.erase( addr );
 		} else if( tokens[0] == "reloadvm" ) {
 			vm.load( vm.vm_file );
-			std::cout << "Reloaded vm from '" << vm.vm_file << "'\n\n";					
+			std::cout << "Reloaded vm from '" << vm.vm_file << "'\n\n";
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );
 		}
+		std::cout << "READY\n";
 	}
-
 }

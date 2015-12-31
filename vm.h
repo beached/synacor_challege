@@ -60,8 +60,8 @@ struct virtual_machine_t {
 	void load( std::string filename );
 };	// struct virtual_machine_t
 
-std::string full_dump_string( virtual_machine_t & vm );
-void full_dump( virtual_machine_t & vm );
+std::string full_dump_string( virtual_machine_t & vm, uint16_t from_address = 0, uint16_t to_address = std::numeric_limits<uint16_t>::max( ) );
+void full_dump( virtual_machine_t & vm, uint16_t from_address = 0, uint16_t to_address = std::numeric_limits<uint16_t>::max( ) );
 
 namespace instructions {
 	void inst_halt( virtual_machine_t & );
@@ -102,77 +102,4 @@ namespace instructions {
 
 bool is_alphanum( uint16_t i );
 
-template<typename Decoder>
-std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
-	std::stringstream ss;
-
-	auto get_mem = [&]( auto & addr, bool inc = true ) {
-		if( addr >= vm.memory.size( ) ) {
-			std::cerr << ss.str( ) << std::endl << std::endl;
-			std::cerr << "UNEXPECTED END OF MEMORY\n" << std::endl;
-			exit( EXIT_FAILURE );
-		}
-		if( inc ) {
-			++addr;
-			return vm.memory[addr - 1];
-		}
-		return vm.memory[addr];
-	};
-
-	auto escape = []( int i ) {
-		std::string str = std::to_string( i );
-		while( str.size( ) < 3 ) {
-			str = "0" + str;
-		}
-		str = "\\" + str;
-		return str;
-	};
-
-	auto mem_to_str = [&]( auto i, bool raw_ascii = false ) {
-		if( raw_ascii ) {
-			if( is_alphanum( i ) ) {
-				ss << static_cast<unsigned char>(i);
-			} else {
-				ss << escape( i );
-			}
-		} else if( virtual_machine_t::is_register( i ) ) {
-			ss << "R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "(" << vm.get_register( i ) << ")";
-		} else if( i < virtual_machine_t::REGISTER0 ) {
-			ss << static_cast<int>(i);
-		} else {
-			ss << "INVALID(" << static_cast<int>(i) << ")";
-		}
-	};
-
-	for( uint16_t addr = 0; addr < vm.memory.size( ); ++addr ) {
-		ss << addr << ": ";
-		auto val = get_mem( addr );
-		if( instructions::is_instruction( val ) ) {
-			auto d = decoder( val );
-			ss << d.name;
-			if( val == 19/*OUT*/ ) {
-				ss << " \"";
-				do {
-					mem_to_str( get_mem( addr ), true );
-					val = get_mem( addr, false );
-					if( val == 19 ) {
-						++addr;
-					}
-				} while( val == 19 );
-				ss << "\"";
-			} else {
-				for( size_t n = 0; n < d.arg_count; ++n ) {
-					ss << "  ";
-					mem_to_str( get_mem( addr ) );
-				}
-			}
-		} else {
-			mem_to_str( val );
-		}
-		--addr;
-		ss << "\n";
-	}
-	return ss.str( );
-}
-
-
+std::string dump_memory( virtual_machine_t & vm, uint16_t from_address = 0, uint16_t to_address = std::numeric_limits<uint16_t>::max( ) );
