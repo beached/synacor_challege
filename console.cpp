@@ -22,21 +22,12 @@
 
 #include "vm.h"
 #include <iostream>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string.hpp>
 #include "console.h"
 #include <fstream>
+#include "file_helper.h"
 
 namespace {
-	std::string epoch( ) {
-		using boost::posix_time::ptime;
-		using boost::posix_time::time_from_string;
-		static ptime const epoch = time_from_string( "1970-01-01 00:00:00.000" );
-		ptime other = time_from_string( "2011-08-09 17:27:00.000" );
-
-		return std::to_string( (other - epoch).total_milliseconds( ) );
-	}
-
 	void print_help( ) {
 		std::cout << "Debugging console\nValid commmands are:\n";
 		std::cout << "savememory -> save memory to a file(sc_<time since epoch>_dump.txt)\n";
@@ -56,6 +47,7 @@ namespace {
 		std::cout << "setbp <address> -> set brakpoint at <address>\n";
 		std::cout << "clearbp <address> -> clear brakpoint at <address>\n";
 		std::cout << "reloadvm -> reload existing vm\n";
+		std::cout << "savestate -> save the state of program to file(sc_<time since epoch>_state.bin)\n";
 		std::cout << "\n";
 	}
 
@@ -107,7 +99,7 @@ void console( virtual_machine_t & vm ) {
 			std::cout << "\n\n";
 		} else if( tokens[0] == "savememory" ) {
 			std::ofstream fout;
-			std::string const fname = "sc_" + epoch( ) + "_dump.txt";
+			auto const fname = generate_unique_file_name( "sc_", "_dump", "txt" );
 			fout.open( fname.c_str( ) );
 			if( !fout ) {
 				std::cerr << "Error saving memory dump to " << fname << "\n";
@@ -202,7 +194,11 @@ void console( virtual_machine_t & vm ) {
 			vm.breakpoints.erase( addr );
 		} else if( tokens[0] == "reloadvm" ) {
 			vm.load( vm.vm_file );
-			std::cout << "Reloaded vm from '" << vm.vm_file << "'\n\n";
+			std::cout << "Reloaded vm from '" << vm.vm_file << "'\n";
+		} else if( tokens[0] == "savestate" ) {
+			auto fname = generate_unique_file_name( "sc_", "_state", "bin" );
+			vm.save_state( fname );
+			std::cout << "State saved to file '" << fname << "'\n";
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );

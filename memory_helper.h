@@ -55,26 +55,6 @@ public:
 		from_file( filename );
 	}
 
-	void from_file( boost::string_ref filename ) {
-		boost::iostreams::mapped_file_source file_memory;
-		file_memory.open( filename.data( ) );
-		if( !file_memory.is_open( ) ) {
-			std::cerr << "Error opening file: " << filename << std::endl;
-			exit( EXIT_FAILURE );
-		}
-
-		container_conversion<char> memory_view( m_memory.data( ), m_memory.data( ) + m_memory.size( ) );
-
-		if( file_memory.size( ) > memory_view.size( ) ) {
-			std::cerr << "VM File does not have the correct size.  It is " << file_memory.size( ) << " bytes, which is > " << memory_view.size( ) << "bytes" << std::endl;
-			exit( EXIT_FAILURE );
-		}
-
-		std::copy( file_memory.begin( ), file_memory.end( ), memory_view.begin( ) );
-
-		file_memory.close( );
-	}
-
 	iterator begin( ) {
 		return m_memory.begin( );
 	}

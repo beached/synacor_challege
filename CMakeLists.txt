@@ -24,12 +24,14 @@ if(THREADS_HAVE_PTHREAD_ARG)
 endif( )
 
 set( SOURCE_FILES
+	console.cpp
+	console.h
+	file_helper.cpp
+	file_helper.h
 	helpers.h
 	memory_helper.h
 	vm.h
 	vm.cpp
-	console.cpp
-	console.h
 )
 
 include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )

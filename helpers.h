@@ -96,8 +96,14 @@ public:
 
 template<typename As>
 struct container_conversion {
-	As * m_begin;
-	As * m_end;
+	using value_type = As;
+	using iterator = As *;
+	using const_iterator = As const *;
+	using reference = As&;
+	using const_reference = As const &;
+
+	iterator m_begin;
+	iterator m_end;
 
 	container_conversion( ) = delete;
 	~container_conversion( ) = default;
@@ -112,19 +118,27 @@ struct container_conversion {
 		m_begin( reinterpret_cast<As*>(Begin) ),
 		m_end( reinterpret_cast<As*>(End) ) { }
 
-	As * begin( ) {
+	iterator begin( ) {
 		return m_begin;
 	}
 
-	As const * begin( ) const {
+	const_iterator begin( ) const {
 		return m_begin;
 	}
 
-	As * end( ) {
+	const_iterator cbegin( ) const {
+		return m_begin;
+	}
+
+	iterator end( ) {
 		return m_end;
 	}
 
-	As const * end( ) const {
+	const_iterator end( ) const {
+		return m_end;
+	}
+
+	const_iterator cend( ) const {
 		return m_end;
 	}
 
@@ -132,15 +146,24 @@ struct container_conversion {
 		return static_cast<size_t>(std::distance( m_begin, m_end ));
 	}
 
-	As & operator[]( size_t pos ) {
+	reference operator[]( size_t pos ) {
+		return *(m_begin + pos);
+	}
+
+	const_reference operator[]( size_t pos ) const {
+		return *(m_begin + pos);
+	}
+
+	reference at( size_t pos ) {
 		assert( pos < size( ) );
 		return *(m_begin + pos);
 	}
 
-	As const & operator[]( size_t pos ) const {
+	const_reference at( size_t pos ) const {
 		assert( pos < size( ) );
 		return *(m_begin + pos);
 	}
+
 };	// struct container_conversion
 
 class term_buff_t {

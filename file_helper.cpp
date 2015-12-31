@@ -20,29 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "file_helper.h"
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/utility/string_ref.hpp>
+#include <string>
 
-#include <cstdint>
-#include <cstdlib>
-#include <iostream>
-#include <vector>
-#include <cctype>
+namespace {
+	std::string epoch( ) {
+		using boost::posix_time::ptime;
+		using boost::posix_time::time_from_string;
+		static ptime const epoch = time_from_string( "1970-01-01 00:00:00.000" );
+		ptime other = time_from_string( "2011-08-09 17:27:00.000" );
 
-#include "memory_helper.h"
-#include "helpers.h"
-#include "vm.h"
-
-int main( int argc, char** argv ) {
-	virtual_machine_t vm;
-	zero_fill( vm.registers );
-	zero_fill( vm.memory );
-	if( argc <= 1 ) {
-		std::cerr << "Must supply a vm file" << std::endl;
-		exit( EXIT_FAILURE );
+		return std::to_string( (other - epoch).total_milliseconds( ) );
 	}
-	vm.load( argv[1] );
-
-	std::cout << dump_memory( vm ) << std::endl;
-
-	return EXIT_SUCCESS;
 }
-
+std::string generate_unique_file_name( boost::string_ref prefix, boost::string_ref suffix, boost::string_ref extension ) {
+	std::string result = prefix.to_string() + epoch( ) + suffix.to_string() + "." + extension.to_string();
+	return result;
+}

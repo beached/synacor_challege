@@ -58,6 +58,9 @@ struct virtual_machine_t {
 	uint16_t pop_program_stack( );
 	uint16_t fetch_opcode( bool is_instruction = false );
 	void load( std::string filename );
+	void save_state( boost::string_ref filename );
+	void clear( );
+
 };	// struct virtual_machine_t
 
 std::string full_dump_string( virtual_machine_t & vm, uint16_t from_address = 0, uint16_t to_address = std::numeric_limits<uint16_t>::max( ) );
