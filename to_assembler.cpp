@@ -30,6 +30,7 @@
 #include "memory_helper.h"
 #include "helpers.h"
 #include "vm.h"
+#include "file_helper.h"
 
 int main( int argc, char** argv ) {
 	if( argc <= 1 ) {
@@ -37,7 +38,6 @@ int main( int argc, char** argv ) {
 		exit( EXIT_FAILURE );
 	}
 	virtual_machine_t vm( argv[1] );
-
 	std::cout << dump_memory( vm ) << std::endl;
 
 	return EXIT_SUCCESS;

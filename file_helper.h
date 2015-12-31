@@ -161,9 +161,9 @@ public:
 			result.offset = offset;
 			if( create ) {
 				result.new_file_size = static_cast<boost::iostreams::stream_offset>(items*sizeof( value_type ));
-			} else {
+			}// else {
 				result.length = items*sizeof( value_type );
-			}
+			//}
 			return result;
 		}( )),
 		m_file_data( ),
