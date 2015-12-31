@@ -41,6 +41,8 @@ namespace {
 		std::cout << "getreg <0-7> print register <0-7>\n";
 		std::cout << "setreg <0-7> <value> -> set the register <0-7> to <value>\n";
 		std::cout << "getregs -> display value in all registers and intruction ptr\n";
+		std::cout << "showargstack -> display the argument stack items\n";
+		std::cout << "showprogstack -> display the program stack items\n";
 		std::cout << "tick -> run next instruction in vm\n";
 		std::cout << "getbps -> display all breakpoints\n";
 		std::cout << "clearbps -> clear all breakpoints\n";
@@ -169,7 +171,7 @@ void console( virtual_machine_t & vm ) {
 			vm.registers[addr] = value;
 		} else if( tokens[0] == "tick" ) {
 			vm.tick( true );
-		} else if( tokens[0] == "showregs" ) {
+		} else if( tokens[0] == "getregs" ) {
 			std::cout << "Current register values\n";
 			std::cout << dump_regs( vm ) << "\n";
 		} else if( tokens[0] == "getbps" ) {
@@ -215,7 +217,15 @@ void console( virtual_machine_t & vm ) {
 			vm.load_state( state_file );
 			std::cout << "Loaded state from file '" << state_file << "'\n";
 		} else if( tokens[0] == "showargstack" ) {
+			std::cout << "Current argument stack(" << vm.argument_stack.size( ) << ")\n";
+			for( size_t n = 0; n < vm.argument_stack.size( ); ++n ) {
+				std::cout << n << ": " << vm.argument_stack[n] << "\n";
+			}
 		} else if( tokens[0] == "showprogstack" ) {
+			std::cout << "Current program stack(" << vm.program_stack.size( ) << ")\n";
+			for( size_t n = 0; n < vm.program_stack.size( ); ++n ) {
+				std::cout << n << ": " << vm.program_stack[n] << "\n";
+			}
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );
