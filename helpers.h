@@ -165,9 +165,10 @@ public:
 				has_read = false;
 				return '\n';
 			}
-			if( !std::getline( std::cin, cur_line ) ) {
-				std::cerr << "ERRROR ATTEMPTING TO READ INPUT" << std::endl;
-				exit( EXIT_FAILURE );
+			if( !std::getline( std::cin, cur_line ) ) { 
+				return '\0';
+				//std::cerr << "ERRROR ATTEMPTING TO READ INPUT" << std::endl;
+				//exit( EXIT_FAILURE );
 			}
 			has_read = true;
 			pos = cur_line.begin( );

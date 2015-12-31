@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(synacor_challenge)
 
-find_package(Boost 1.59.0 REQUIRED COMPONENTS iostreams)
-set(Boost_Libs ${BOOST_Libraries} -lboost_iostreams )
-
+find_package(Boost 1.59.0 REQUIRED COMPONENTS iostreams system thread )
+set(Boost_Libs ${BOOST_Libraries} -lboost_iostreams -lboost_system -lboost_thread )
+set( COMPILER_SPECIFIC_LIBS )
 MESSAGE( WARNING "Current Compiler:" ${CMAKE_CXX_COMPILER_ID} )
 IF( ${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC" )
 	MESSAGE( WARNING "Using Visual Studio" )
@@ -34,8 +34,8 @@ include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )
 link_directories( ${Boost_LIBRARY_DIRS} )
 
 add_executable(synacor_challenge ${SOURCE_FILES} main.cpp )
-target_link_libraries(synacor_challenge ${Boost_Libs} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries(synacor_challenge ${Boost_Libs} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${COMPILER_SPECIFIC_LIBS} )
 
 add_executable( to_assembler ${SOURCE_FILES} to_assembler.cpp )
-target_link_libraries( to_assembler ${Boost_Libs} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} )
+target_link_libraries( to_assembler ${Boost_Libs} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${COMPILER_SPECIFIC_LIBS} )
 

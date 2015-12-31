@@ -27,6 +27,15 @@
 #include <vector>
 #include "vm.h"
 
+virtual_machine_t::virtual_machine_t( ):
+	registers( ),
+	memory( ),
+	argument_stack( ),
+	program_stack( ),
+	should_break( false ),
+	term_buff( ),
+	instruction_ptr( 0 ) { }
+
 uint16_t & virtual_machine_t::get_register( uint16_t i, bool log7 ) {
 	if( !is_register( i ) ) {
 		std::cerr << "FATAL ERROR: get_register called with invalid value " << i << std::endl;
@@ -104,8 +113,15 @@ uint16_t virtual_machine_t::fetch_opcode( bool is_instruction ) {
 	return current_instruction;
 }
 
-void virtual_machine_t::step( ) {
-
+void full_dump( virtual_machine_t & vm ) {
+	std::cerr << dump_memory( vm, [&]( size_t i ) {
+		return  instructions::decoder( )[i];
+	} );
+	std::cerr << "\n\nInstruction Ptr: " << vm.instruction_ptr << "\n";
+	std::cerr << "Registers\n";
+	for( uint16_t n=0; n<vm.registers.size( ); ++n ) {
+		std::cout << "R" << n << ": " << static_cast<int>( vm.registers[n] ) << "\n";
+	}
 }
 
 namespace instructions {
@@ -254,6 +270,14 @@ namespace instructions {
 		auto a = vm.pop_argument_stack( );
 
 		auto tmp = vm.term_buff.get( );
+		if( tmp == 0 ) {
+			vm.should_break = true;
+			tmp = vm.term_buff.get( );
+		}
+		if( vm.should_break ) {
+			full_dump( vm );
+			vm.should_break = false;
+		}
 
 		vm.get_reg_or_mem( a ) = static_cast<uint16_t>(tmp);
 	}

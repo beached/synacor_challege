@@ -34,12 +34,15 @@ struct virtual_machine_t {
 	virtual_memory_t<32768u> memory;
 	std::vector<uint16_t> argument_stack;
 	std::vector<uint16_t> program_stack;
+	bool should_break;
 
 	term_buff_t term_buff;
 	uint16_t instruction_ptr;
 
 	static uint16_t const MODULO = 32768;
 	static uint16_t const REGISTER0 = 32768;
+
+	virtual_machine_t( );
 
 	uint16_t & get_register( uint16_t i, bool log7 = true );
 	static bool is_value( uint16_t i );
@@ -50,7 +53,7 @@ struct virtual_machine_t {
 	uint16_t pop_argument_stack( );	
 	uint16_t pop_program_stack( );
 	uint16_t fetch_opcode( bool is_instruction = false );
-	void step( );
+	void full_dump( virtual_machine_t & vm );
 };	// struct virtual_machine_t
 
 
@@ -111,7 +114,7 @@ std::string dump_memory( virtual_machine_t & vm, Decoder decoder ) {
 	};
 
 	auto escape = []( int i ) {
-		auto str = std::to_string( i );
+		std::string str = std::to_string( i );
 		while( str.size( ) < 3 ) {
 			str = "0" + str;
 		}
