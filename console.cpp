@@ -51,6 +51,9 @@ namespace {
 		std::cout << "clearbp <address> -> clear brakpoint at <address>\n";
 		std::cout << "savestate [filename] -> save the state of program to [filename] or sc_<time since epoch>_state.bin if not specified\n";
 		std::cout << "loadtate <filename> -> load the state of program from <filename>\n";
+		std::cout << "starttrace -> start a full instruction/memory modification trace\n";
+		std::cout << "stoptrace -> stop the full instruction/memory modification trace\n";
+		std::cout << "savetrace [filename] -> save previous trace to [filename]/[filenaem].state or sc_<time since epoch>_trace.json/sc_<time since epoch>_trace.json.state if not specified\n";
 		std::cout << "\n";
 	}	
 }
@@ -106,8 +109,12 @@ void console( virtual_machine_t & vm ) {
 			if( tokens.size( ) > 1 ) {
 				vm_control::save_state( vm, current_line.substr( 10 ) );
 			} else {
-				vm_control::save_state( vm, generate_unique_file_name( "sc_", "_state", "bin" ) );
+				vm_control::save_state( vm, generate_unique_file_name( "sc_", "_trace", "json" ) );
 			}
+		} else if( tokens[0] == "starttrace" ) {
+			vm_control::start_tracing( vm );
+		} else if( tokens[0] == "stoptrace" ) {
+			vm_control::stop_tracing( vm );
 		} else if( tokens[0] == "loadstate" ) {
 			vm_control::load_state( vm, current_line.substr( 10 ) );
 		} else if( tokens[0] == "showargstack" ) {
@@ -121,6 +128,13 @@ void console( virtual_machine_t & vm ) {
 		} else if( tokens[0] == "quit" ) {
 			std::cout << "Exiting Program\n\n\n";
 			exit( EXIT_SUCCESS );
+		} else if( tokens[0] == "savetrace" ) {
+			if( tokens.size( ) > 1 ) {
+				vm_control::save_trace( vm, current_line.substr( 10 ) );
+			} else {
+				vm_control::save_trace( vm, generate_unique_file_name( "sc_", "_trace", "bin" ) );
+			}
+
 		} else {
 			std::cout << "ERROR\n\n";
 			print_help( );

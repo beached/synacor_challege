@@ -140,4 +140,7 @@ struct vm_control final {
 	static void load_state( virtual_machine_t & vm, boost::string_ref fname );
 	static void show_argument_stack( virtual_machine_t & vm );
 	static void show_program_stack( virtual_machine_t & vm );
+	static void save_trace( virtual_machine_t & vm, boost::string_ref fname );
+	static void start_tracing( virtual_machine_t & vm );
+	static void stop_tracing( virtual_machine_t & vm );
 };	//struct vm_control

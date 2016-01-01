@@ -23,7 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <boost/algorithm/string.hpp>
-
+#include <boost/filesystem.hpp>
 #include "vm.h"
 #include "vm_control.h"
 #include "helpers.h"
@@ -40,16 +40,23 @@ namespace {
 
 }
 
-void vm_control::save_asm( virtual_machine_t & vm, boost::string_ref fname ) {
-	std::ofstream fout;
-	fout.open( fname.data( ) );
-	if( !fout ) {
-		std::cerr << "Error saving memory dump to " << fname << "\n";
-	} else {
-		fout << full_dump_string( vm );
-		fout.close( );
-		std::cout << "Saved file to " << fname << "\n";
+namespace {
+	void save_to_text_file( boost::string_ref fname, boost::string_ref text ) {
+		std::ofstream fout;
+		fout.open( fname.data( ) );
+		if( !fout ) {
+			std::cerr << "Error saving to " << fname << "\n";
+			exit( EXIT_FAILURE );
+		}
+		fout << text;
+		fout.close( );		
 	}
+
+}
+
+void vm_control::save_asm( virtual_machine_t & vm, boost::string_ref fname ) {
+	save_to_text_file( fname, full_dump_string( vm ) );
+	std::cout << "Saved file to " << fname << "\n";
 }
 
 void vm_control::get_ip( virtual_machine_t & vm ) {
@@ -100,4 +107,18 @@ void vm_control::show_program_stack( virtual_machine_t & vm ) {
 	for( size_t n = 0; n < vm.program_stack.size( ); ++n ) {
 		std::cout << n << ": " << vm.program_stack[n] << "\n";
 	}
+}
+
+void vm_control::save_trace(virtual_machine_t& vm, boost::string_ref fname) {
+	save_to_text_file( fname, vm.trace.to_json( ) );
+	boost::filesystem::rename( "trace_state.bin", fname.to_string( ) + ".state" );
+}
+
+void vm_control::start_tracing( virtual_machine_t & vm ) {
+	save_state( vm, "trace_state.bin" );
+	vm.enable_tracing = true;
+}
+
+void vm_control::stop_tracing( virtual_machine_t & vm ) {
+	vm.enable_tracing = false;
 }

@@ -38,7 +38,7 @@ virtual_machine_t::virtual_machine_t( ):
 	should_break( false ),
 	instruction_ptr( 0 ),
 	breakpoints( ) {
-	
+
 	zero_fill( registers );
 	zero_fill( memory );
 }
@@ -50,22 +50,26 @@ virtual_machine_t::virtual_machine_t( boost::string_ref filename ):
 	program_stack( ),
 	should_break( false ),
 	instruction_ptr( 0 ),
-	breakpoints( ) {
-	
+	breakpoints( ),
+	trace( ),
+	enable_tracing( false ) {
+
 	load_state( filename );
 }
 
-void virtual_machine_t::clear( ) { 
+void virtual_machine_t::clear( ) {
 	zero_fill( registers );
 	zero_fill( memory );
 	program_stack.clear( );
 	argument_stack.clear( );
+	trace.clear( );
+	enable_tracing = false;
 	instruction_ptr = 0;
 }
 
 void virtual_machine_t::save_state( boost::string_ref filename ) {
 	// Format of file in uint16_t's.  So 2bytes per 
-	// 0->32767 -> memory from 0->32767
+	// 0->32767 -> memory from 0->32767t
 	// 32768->32775 -> registers 0->7
 	// 32776 -> instruction ptr
 	// 32777 -> size of program stack
@@ -143,7 +147,7 @@ void virtual_machine_t::load_state( boost::string_ref filename ) {
 			++offset;
 			auto it = get_it( );
 			program_stack.reserve( program_stack_size );
-			std::copy( it, it + program_stack_size, std::back_inserter( program_stack ) ); 
+			std::copy( it, it + program_stack_size, std::back_inserter( program_stack ) );
 			offset += program_stack.size( );
 		}
 		{
@@ -159,16 +163,36 @@ void virtual_machine_t::load_state( boost::string_ref filename ) {
 
 
 void virtual_machine_t::tick( bool is_debugger ) {
-		if( !is_debugger && (should_break || breakpoints.count( instruction_ptr ) > 0) ) {
-			std::cout << "Breaking at address " << instruction_ptr << "\n";
-			console( *this );
+	if( !is_debugger && (should_break || breakpoints.count( instruction_ptr ) > 0) ) {
+		std::cout << "Breaking at address " << instruction_ptr << "\n";
+		console( *this );
+	}
+	should_break = false;
+	auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
+	for( size_t n = 0; n < decoded.arg_count; ++n ) {
+		argument_stack.push_back( fetch_opcode( ) );
+	}
+
+	auto trace1 = false;
+	if( enable_tracing ) {
+		trace1 = true;
+		trace.instruction_ptrs.push_back( instruction_ptr );
+		trace.op_codes.emplace_back( decoded.op_code, argument_stack );
+		if( decoded.do_trace ) {
+			trace.memory_changes.emplace_back( argument_stack[0], get_reg_or_mem( argument_stack[0] ) );
+		} else {
+			trace.memory_changes.emplace_back( );
 		}
-		should_break = false;
-		auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
-		for( size_t n = 0; n < decoded.arg_count; ++n ) {
-			argument_stack.push_back( fetch_opcode( ) );
+	}
+	decoded.instruction( *this );
+	if( trace1 && enable_tracing ) {
+		auto new_value = get_reg_or_mem( trace.memory_changes.rbegin( )->address );
+		if( trace.memory_changes.rbegin( )->old_value != new_value ) {
+			trace.memory_changes.rbegin( )->new_value = new_value;
+		} else {
+			trace.memory_changes.rbegin( )->clear( );
 		}
-		decoded.instruction( *this );
+	}
 }
 
 uint16_t & virtual_machine_t::get_register( uint16_t i ) {
@@ -268,7 +292,7 @@ std::string dump_memory( virtual_machine_t & vm, uint16_t from_address, uint16_t
 	};
 
 	auto escape = []( int i ) {
-		std::string str = std::to_string( i );
+		auto str = std::to_string( i );
 		while( str.size( ) < 3 ) {
 			str = "0" + str;
 		}
@@ -324,14 +348,104 @@ std::string dump_memory( virtual_machine_t & vm, uint16_t from_address, uint16_t
 	return ss.str( );
 }
 
+vm_trace::op_t::op_t( uint16_t OpCode, std::vector<uint16_t> Params ): op_code( OpCode ), params( std::move( Params ) ) { }
+
+std::string vm_trace::op_t::to_json( ) const {
+	auto escape = []( int i ) {
+		auto str = std::to_string( i );
+		while( str.size( ) < 3 ) {
+			str = "0" + str;
+		}
+		str = "\\" + str;
+		return str;
+	};
+	std::stringstream ss;
+
+	auto mem_to_str = [&]( auto i, bool raw_ascii = false ) {
+		if( raw_ascii ) {
+			ss << "\"";
+			if( is_alphanum( i ) ) {
+				ss << static_cast<unsigned char>(i);
+			} else {
+				ss << escape( i );
+			}
+			ss << "\"";
+		} else if( virtual_machine_t::is_register( i ) ) {
+			ss << "\"R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "\"";
+		} else if( i < virtual_machine_t::REGISTER0 ) {
+			ss << static_cast<int>(i);
+		} else {
+			ss << "\"INVALID(" << static_cast<int>(i) << ")\"";
+		}
+		return ss.str( );
+	};
+
+	static auto const & decoder = instructions::decoder( );
+
+
+	ss << "{ \"op_code\": " << decoder[op_code].name << ", ";
+	size_t param = 0;
+	for( ; param < params.size( ); ++param ) {
+		if( param > 0 ) {
+			ss << ", ";
+		}
+		ss << "\"param_" << static_cast<char>('a' + param) << "\": " << (params[param] < 0 ? "nil" : mem_to_str( params[param], op_code == 19 ));
+	}
+
+	for( ; param < 3; ++param ) {
+		if( param > 0 ) {
+			ss << ", ";
+		}
+		ss << "\"param_" << static_cast<char>('a' + param) << "\": nil";
+	}
+	ss << " }";
+	return ss.str( );
+}
+
+vm_trace::memory_change_t::memory_change_t( uint16_t Address, uint16_t Old ): address( Address ), old_value( Old ), new_value( -1 ) { }
+
+vm_trace::memory_change_t::memory_change_t( ): address( -1 ), old_value( -1 ), new_value( -1 ) { }
+
+void vm_trace::memory_change_t::clear( ) {
+	address = -1;
+	old_value = -1;
+	new_value = -1;
+}
+
+std::string vm_trace::memory_change_t::to_json( ) const {
+	if( address < 0 || old_value < 0 || new_value < 0 ) {
+		return "{ nil }";
+	}
+	std::stringstream ss;
+	ss << "{ \"address\": " << address << ", ";
+	ss << "\"old_value\": " << old_value << ", ";
+	ss << "\"new_value\": " << new_value << " }";
+	return ss.str( );
+}
+
+std::string vm_trace::to_json( ) const {
+	assert( instruction_ptrs.size( ) == op_codes.size( ) && op_codes.size( ) == memory_changes.size( ) );
+	std::stringstream ss;
+	ss << "{ [";
+	for( size_t n = 0; n < instruction_ptrs.size( ); ++n ) {
+		if( n > 0 ) {
+			ss << ",";
+		}
+		ss << "\n{\n\t\"instruction_ptr\": " << instruction_ptrs[n] << ",\n";
+		ss << "\t\"op_code\": " << op_codes[n].to_json( ) << ",\n";
+		ss << "\t\"memory_change\": " << memory_changes[n].to_json( ) << " }";
+	}
+	ss << "\n] }";
+	return ss.str( );
+}
 
 std::string full_dump_string( virtual_machine_t & vm, uint16_t from_address, uint16_t to_address ) {
 	std::stringstream ss;
 	ss << dump_memory( vm, from_address, to_address );
 	ss << "\n\nInstruction Ptr: " << vm.instruction_ptr << "\n";
 	ss << "Registers\n";
-	for( uint16_t n=0; n<vm.registers.size( ); ++n ) {
-		ss << "R" << n << ": " << static_cast<int>( vm.registers[n] ) << "\n";
+	for( uint16_t n = 0; n < vm.registers.size( ); ++n ) {
+		ss << "R" << n << ": " << static_cast<int>(vm.registers[n]) << "\n";
 	}
 	return ss.str( );
 }
@@ -490,7 +604,7 @@ namespace instructions {
 			vm.should_break = true;
 		}
 		if( vm.should_break ) {
-			console( vm );	
+			console( vm );
 			vm.should_break = false;
 		}
 		if( tmp < 0 ) {
@@ -503,35 +617,37 @@ namespace instructions {
 
 	}
 
-	decoded_inst_t::decoded_inst_t( size_t ac, decoded_inst_t::instruction_t i, std::string n ):
+	decoded_inst_t::decoded_inst_t( uint16_t opcode, size_t ac, decoded_inst_t::instruction_t i, std::string n, bool dotrace ):
+		op_code( opcode ),
 		arg_count( ac ),
 		instruction( i ),
-		name( std::move( n ) ) { }
+		name( std::move( n ) ),
+		do_trace( dotrace ) { }
 
 	std::vector<decoded_inst_t> const & decoder( ) {
 		static std::vector<decoded_inst_t> const decoder = {
-			decoded_inst_t{ 0, inst_halt, "HALT" },	// 0
-			decoded_inst_t{ 2, inst_set, "SET" },	// 1
-			decoded_inst_t{ 1, inst_push, "PUSH" },	// 2
-			decoded_inst_t{ 1, inst_pop, "POP" },	// 3
-			decoded_inst_t{ 3, inst_eq, "EQ" },		// 4 
-			decoded_inst_t{ 3, inst_gt, "GT" },		// 5
-			decoded_inst_t{ 1, inst_jmp, "JMP" },	// 6
-			decoded_inst_t{ 2, inst_jt, "JT" },		// 7
-			decoded_inst_t{ 2, inst_jf, "JF" },		// 8
-			decoded_inst_t{ 3, inst_add, "ADD" },	// 9
-			decoded_inst_t{ 3, inst_mult, "MULT" },	// 10
-			decoded_inst_t{ 3, inst_mod, "MOD" },	// 11
-			decoded_inst_t{ 3, inst_and, "AND" },	// 12
-			decoded_inst_t{ 3, inst_or, "OR" },		// 13
-			decoded_inst_t{ 2, inst_not, "NOT" },	// 14
-			decoded_inst_t{ 2, inst_rmem, "RMEM" },	// 15
-			decoded_inst_t{ 2, inst_wmem, "WMEM" },	// 16
-			decoded_inst_t{ 1, inst_call, "CALL" },	// 17
-			decoded_inst_t{ 0, inst_ret, "RET" },	// 18
-			decoded_inst_t{ 1, inst_out, "OUT" },	// 19
-			decoded_inst_t{ 1, inst_in, "IN" },		// 20
-			decoded_inst_t{ 0, inst_noop, "NOOP" }	// 21
+			decoded_inst_t { 0, 0, inst_halt, "HALT" },	// 0
+			decoded_inst_t { 1, 2, inst_set, "SET", true },	// 1
+			decoded_inst_t { 2, 1, inst_push, "PUSH" },	// 2
+			decoded_inst_t { 3, 1, inst_pop, "POP", true },	// 3
+			decoded_inst_t { 4, 3, inst_eq, "EQ", true },		// 4 
+			decoded_inst_t { 5, 3, inst_gt, "GT", true },		// 5
+			decoded_inst_t { 6, 1, inst_jmp, "JMP" },	// 6
+			decoded_inst_t { 7, 2, inst_jt, "JT" },		// 7
+			decoded_inst_t { 8, 2, inst_jf, "JF" },		// 8
+			decoded_inst_t { 9, 3, inst_add, "ADD", true },	// 9
+			decoded_inst_t { 10, 3, inst_mult, "MULT", true },	// 10
+			decoded_inst_t { 11, 3, inst_mod, "MOD", true },	// 11
+			decoded_inst_t { 12, 3, inst_and, "AND", true },	// 12
+			decoded_inst_t { 13, 3, inst_or, "OR", true },		// 13
+			decoded_inst_t { 14, 2, inst_not, "NOT", true },	// 14
+			decoded_inst_t { 15, 2, inst_rmem, "RMEM", true },	// 15
+			decoded_inst_t { 16, 2, inst_wmem, "WMEM", true },	// 16
+			decoded_inst_t { 17, 1, inst_call, "CALL" },	// 17
+			decoded_inst_t { 18, 0, inst_ret, "RET" },	// 18
+			decoded_inst_t { 19, 1, inst_out, "OUT" },	// 19
+			decoded_inst_t { 20, 1, inst_in, "IN", true },		// 20
+			decoded_inst_t { 21, 0, inst_noop, "NOOP" }	// 21
 		};
 		return decoder;
 	}

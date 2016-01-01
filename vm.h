@@ -30,6 +30,40 @@
 #include "helpers.h"
 #include "memory_helper.h"
 
+struct vm_trace {
+	struct op_t {
+		uint16_t op_code;
+		std::vector<uint16_t> params;
+		op_t( uint16_t OpCode, std::vector<uint16_t> Params = { } );
+
+		std::string to_json( ) const;
+	};
+
+	struct memory_change_t {
+		int32_t address;
+		int32_t old_value;
+		int32_t new_value;
+
+		memory_change_t( );
+		memory_change_t( uint16_t Address, uint16_t Old );
+
+		void clear( );
+		std::string to_json( ) const;
+	};	// struct memory_change
+
+	std::vector<uint16_t> instruction_ptrs;
+	std::vector<op_t> op_codes;
+	std::vector<memory_change_t> memory_changes;
+
+	void clear( ) {
+		instruction_ptrs.clear( );
+		op_codes.clear( );
+		memory_changes.clear( );
+	}
+
+	std::string to_json( ) const;
+};	// struct vm_trace
+
 struct virtual_machine_t {
 	virtual_memory_t<8> registers;
 	virtual_memory_t<32768u> memory;
@@ -38,6 +72,8 @@ struct virtual_machine_t {
 	bool should_break;
 	uint16_t instruction_ptr;
 	std::set<uint16_t> breakpoints;
+	vm_trace trace;
+	bool enable_tracing;
 
 	static uint16_t const MODULO = 32768;
 	static uint16_t const REGISTER0 = 32768;
@@ -90,11 +126,12 @@ namespace instructions {
 
 	struct decoded_inst_t {
 		typedef void( *instruction_t )( virtual_machine_t & );
-		size_t const arg_count;
+		uint16_t op_code;
+		size_t const arg_count;		
 		instruction_t instruction;
 		std::string name;
-
-		decoded_inst_t( size_t ac, instruction_t i, std::string n );
+		bool do_trace;		
+		decoded_inst_t( uint16_t opcode, size_t ac, instruction_t i, std::string n, bool dotrace = false );
 	};	// struct decoded_inst
 
 	std::vector<decoded_inst_t> const & decoder( );
@@ -104,4 +141,3 @@ namespace instructions {
 bool is_alphanum( uint16_t i );
 
 std::string dump_memory( virtual_machine_t & vm, uint16_t from_address = 0, uint16_t to_address = std::numeric_limits<uint16_t>::max( ) );
-
