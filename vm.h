@@ -36,10 +36,8 @@ struct virtual_machine_t {
 	std::vector<uint16_t> argument_stack;
 	std::vector<uint16_t> program_stack;
 	bool should_break;
-	term_buff_t term_buff;
 	uint16_t instruction_ptr;
 	std::set<uint16_t> breakpoints;
-	std::string vm_file;
 
 	static uint16_t const MODULO = 32768;
 	static uint16_t const REGISTER0 = 32768;

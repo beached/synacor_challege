@@ -36,10 +36,8 @@ virtual_machine_t::virtual_machine_t( ):
 	argument_stack( ),
 	program_stack( ),
 	should_break( false ),
-	term_buff( ),
 	instruction_ptr( 0 ),
-	breakpoints( ),
-	vm_file( ) {
+	breakpoints( ) {
 	
 	zero_fill( registers );
 	zero_fill( memory );
@@ -51,12 +49,10 @@ virtual_machine_t::virtual_machine_t( boost::string_ref filename ):
 	argument_stack( ),
 	program_stack( ),
 	should_break( false ),
-	term_buff( ),
 	instruction_ptr( 0 ),
-	breakpoints( ),
-	vm_file( filename.to_string( ) ) {
+	breakpoints( ) {
 	
-	load_state( vm_file );
+	load_state( filename );
 }
 
 void virtual_machine_t::clear( ) { 
