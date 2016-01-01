@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8)
 project(synacor_challenge)
 
+if( NOT CMAKE_BUILD_TYPE )
+	set( CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: Debug Release." FORCE )
+endif( )
+
+MESSAGE ( "Building for ${CMAKE_BUILD_TYPE}" )
 find_package(Boost 1.59.0 REQUIRED COMPONENTS iostreams system thread date_time filesystem )
 
 set( COMPILER_SPECIFIC_LIBS )
