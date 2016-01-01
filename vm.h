@@ -73,9 +73,10 @@ struct virtual_machine_t {
 	struct debugging_t {
 		bool should_break;
 		std::set<uint16_t> breakpoints;
+		std::set<uint16_t> memory_traps;
 		vm_trace trace;	
 		bool enable_tracing;
-		debugging_t( ): should_break( false ), breakpoints( ), trace( ), enable_tracing( ) { }
+		debugging_t( ): should_break( false ), breakpoints( ), memory_traps( ), trace( ), enable_tracing( ) { }
 	} debugging;
 
 	static uint16_t const MODULO = 32768;
@@ -133,7 +134,7 @@ namespace instructions {
 		size_t const arg_count;		
 		instruction_t instruction;
 		std::string name;
-		bool do_trace;		
+		bool do_memory_trace;		
 		decoded_inst_t( uint16_t opcode, size_t ac, instruction_t i, std::string n, bool dotrace = false );
 	};	// struct decoded_inst
 

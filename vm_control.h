@@ -130,12 +130,38 @@ struct vm_control final {
 		vm.debugging.breakpoints.erase( addr );
 	}
 
+	template<typename Tokens>
+	static void set_memory_trap( virtual_machine_t & vm, Tokens const & tokens ) {
+		if( tokens.size( ) != 2 ) {
+			std::cout << "Error\n";
+			return;
+		}
+		auto addr = convert<uint16_t>( tokens[1] );
+		std::cout << "Setting memory trap at " << addr << "\n";
+		assert( addr < vm.memory.size( ) + 8 );
+		vm.debugging.memory_traps.insert( addr );
+	}
+
+	template<typename Tokens>
+	static void clear_memory_trap( virtual_machine_t & vm, Tokens const & tokens ) {
+		if( tokens.size( ) != 2 ) {
+			std::cout << "Error\n";
+			return;
+		}
+		auto addr = convert<uint16_t>( tokens[1] );
+		std::cout << "Clear memory trap at " << addr << "\n";
+		assert( addr < vm.memory.size( ) );
+		vm.debugging.memory_traps.erase( addr );
+	}
+
 	static void save_asm( virtual_machine_t & vm, boost::string_ref fname );
 	static void get_ip( virtual_machine_t & vm );
 	static void tick( virtual_machine_t & vm );
 	static void get_regs( virtual_machine_t & vm );
 	static void get_bps( virtual_machine_t & vm );
 	static void clear_bps( virtual_machine_t & vm );
+	static void get_memory_traps( virtual_machine_t & vm );
+	static void clear_memory_traps( virtual_machine_t & vm );
 	static void save_state( virtual_machine_t & vm, boost::string_ref fname );
 	static void load_state( virtual_machine_t & vm, boost::string_ref fname );
 	static void show_argument_stack( virtual_machine_t & vm );

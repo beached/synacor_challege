@@ -85,6 +85,18 @@ void vm_control::clear_bps( virtual_machine_t & vm ) {
 	vm.debugging.breakpoints.clear( );
 }
 
+void vm_control::get_memory_traps(virtual_machine_t& vm) {
+	std::cout << "Current memory traps(" << vm.debugging.memory_traps.size( ) << ")\n";
+	for( auto const & bp : vm.debugging.memory_traps ) {
+		std::cout << bp << "\n";
+	}
+}
+
+void vm_control::clear_memory_traps( virtual_machine_t& vm ) {
+	std::cout << "Clearing " << vm.debugging.memory_traps.size( ) << " memory traps\n";
+	vm.debugging.memory_traps.clear( );
+}
+
 void vm_control::save_state( virtual_machine_t & vm, boost::string_ref fname ) {
 	vm.save_state( fname );
 	std::cout << "State saved to file '" << fname << "'\n";

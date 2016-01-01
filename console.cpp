@@ -47,8 +47,12 @@ namespace {
 		std::cout << "tick -> run next instruction in vm\n";
 		std::cout << "getbps -> display all breakpoints\n";
 		std::cout << "clearbps -> clear all breakpoints\n";
-		std::cout << "setbp <address> -> set brakpoint at <address>\n";
-		std::cout << "clearbp <address> -> clear brakpoint at <address>\n";
+		std::cout << "setbp <address> -> set breakpoint at <address>\n";
+		std::cout << "clearbp <address> -> clear breakpoint at <address>\n";
+		std::cout << "getmtraps -> display all memory traps\n";
+		std::cout << "clearmtraps -> clear all memory traps\n";
+		std::cout << "setmtrap <address> -> set memory trap at <address>\n";
+		std::cout << "clearmtrap <address> -> clear memory trap at <address>\n";
 		std::cout << "savestate [filename] -> save the state of program to [filename] or sc_<time since epoch>_state.bin if not specified\n";
 		std::cout << "loadtate <filename> -> load the state of program from <filename>\n";
 		std::cout << "starttrace -> start a full instruction/memory modification trace\n";
@@ -65,10 +69,14 @@ void console( virtual_machine_t & vm ) {
 	print_help( );
 
 	std::string current_line;
+	std::string last_line;
 	std::vector<std::string> tokens;
 
 	std::cout << "READY\n";
 	while( std::getline( std::cin, current_line ) ) {
+		if( current_line == "r" ) {
+			current_line = last_line;
+		}
 		boost::split( tokens, current_line, boost::is_any_of( "\t " ) );
 		if( tokens.size( ) == 0 ) {
 			continue;
@@ -105,6 +113,14 @@ void console( virtual_machine_t & vm ) {
 			vm_control::set_bp( vm, tokens );
 		} else if( tokens[0] == "clearbp" ) {
 			vm_control::clear_bps( vm );
+		} else if( tokens[0] == "getmtraps" ) {
+			vm_control::get_memory_traps( vm );
+		} else if( tokens[0] == "clearmtraps" ) {
+			vm_control::clear_memory_traps( vm );
+		} else if( tokens[0] == "setmtrap" ) {
+			vm_control::set_memory_trap( vm, tokens );
+		} else if( tokens[0] == "clearmtrap" ) {
+			vm_control::clear_memory_traps( vm );
 		} else if( tokens[0] == "savestate" ) {
 			if( tokens.size( ) > 1 ) {
 				vm_control::save_state( vm, current_line.substr( 10 ) );
@@ -140,5 +156,6 @@ void console( virtual_machine_t & vm ) {
 			print_help( );
 		}
 		std::cout << "READY\n";
+		last_line = current_line;
 	}
 }

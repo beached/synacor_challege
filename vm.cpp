@@ -157,36 +157,62 @@ void virtual_machine_t::load_state( boost::string_ref filename ) {
 	f.close( );
 }
 
+namespace {
+	template<typename Container1, typename Container2>
+	bool does_intersect( Container1 const & c1, Container2 const & c2 ) {
+		for( auto const & v1 : c1 ) {
+			if( std::count( std::begin( c2 ), std::end( c2 ), v1 ) > 0 ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+}
+
+namespace {
+	void start_trace( virtual_machine_t & vm, instructions::decoded_inst_t const & decoded ) {
+		vm.debugging.trace.instruction_ptrs.push_back( vm.instruction_ptr );
+		vm.debugging.trace.op_codes.emplace_back( decoded.op_code, vm.argument_stack );
+		if( decoded.do_memory_trace ) {
+			vm.debugging.trace.memory_changes.emplace_back( vm.argument_stack[0], vm.get_reg_or_mem( vm.argument_stack[0] ) );
+		} else {
+			vm.debugging.trace.memory_changes.emplace_back( );
+		}
+	}
+
+	void finish_trace( virtual_machine_t & vm, instructions::decoded_inst_t const & decoded ) {
+		if( !decoded.do_memory_trace ) {
+			return;
+		}
+		assert( vm.debugging.trace.memory_changes.rbegin( )->address >= 0 );
+		auto new_value = vm.get_reg_or_mem( static_cast<uint16_t>(vm.debugging.trace.memory_changes.rbegin( )->address) );
+		if( vm.debugging.trace.memory_changes.rbegin( )->old_value != new_value ) {
+			vm.debugging.trace.memory_changes.rbegin( )->new_value = new_value;
+		} else {
+			vm.debugging.trace.memory_changes.rbegin( )->clear( );
+		}
+	}
+
+}
 
 void virtual_machine_t::tick( bool is_debugger ) {
-	if( !is_debugger && (debugging.should_break || debugging.breakpoints.count( instruction_ptr ) > 0) ) {
-		std::cout << "Breaking at address " << instruction_ptr << "\n";
-		console( *this );
-	}
-	debugging.should_break = false;
 	auto const & decoded = instructions::decoder( )[fetch_opcode( true )];
 	for( size_t n = 0; n < decoded.arg_count; ++n ) {
 		argument_stack.push_back( fetch_opcode( ) );
 	}
 
-	if( debugging.enable_tracing ) {
-		debugging.trace.instruction_ptrs.push_back( instruction_ptr );
-		debugging.trace.op_codes.emplace_back( decoded.op_code, argument_stack );
-		if( decoded.do_trace ) {
-			debugging.trace.memory_changes.emplace_back( argument_stack[0], get_reg_or_mem( argument_stack[0] ) );
-		} else {
-			debugging.trace.memory_changes.emplace_back( );
-		}
+	if( !is_debugger && (debugging.should_break || debugging.breakpoints.count( instruction_ptr ) > 0 || does_intersect( debugging.memory_traps, argument_stack )) ) {
+		std::cout << "Breaking at address " << instruction_ptr << "\n";
+		console( *this );
 	}
+	debugging.should_break = false;
+	if( debugging.enable_tracing ) {
+		start_trace( *this, decoded );
+	}	
 	decoded.instruction( *this );
-	if( decoded.do_trace && debugging.enable_tracing ) {
-		assert( debugging.trace.memory_changes.rbegin( )->address >= 0 );
-		auto new_value = get_reg_or_mem( static_cast<uint16_t>(debugging.trace.memory_changes.rbegin( )->address) );
-		if( debugging.trace.memory_changes.rbegin( )->old_value != new_value ) {
-			debugging.trace.memory_changes.rbegin( )->new_value = new_value;
-		} else {
-			debugging.trace.memory_changes.rbegin( )->clear( );
-		}
+	if( decoded.do_memory_trace && debugging.enable_tracing ) {
+		finish_trace( *this, decoded );
 	}
 }
 
@@ -616,7 +642,7 @@ namespace instructions {
 		arg_count( ac ),
 		instruction( i ),
 		name( std::move( n ) ),
-		do_trace( dotrace ) { }
+		do_memory_trace( dotrace ) { }
 
 	std::vector<decoded_inst_t> const & decoder( ) {
 		static std::vector<decoded_inst_t> const decoder = {
