@@ -109,7 +109,7 @@ void console( virtual_machine_t & vm ) {
 			if( tokens.size( ) > 1 ) {
 				vm_control::save_state( vm, current_line.substr( 10 ) );
 			} else {
-				vm_control::save_state( vm, generate_unique_file_name( "sc_", "_trace", "json" ) );
+				vm_control::save_state( vm, generate_unique_file_name( "sc_", "_state", "bin" ) );
 			}
 		} else if( tokens[0] == "starttrace" ) {
 			vm_control::start_tracing( vm );
@@ -132,7 +132,7 @@ void console( virtual_machine_t & vm ) {
 			if( tokens.size( ) > 1 ) {
 				vm_control::save_trace( vm, current_line.substr( 10 ) );
 			} else {
-				vm_control::save_trace( vm, generate_unique_file_name( "sc_", "_trace", "bin" ) );
+				vm_control::save_trace( vm, generate_unique_file_name( "sc_", "_trace", "json" ) );
 			}
 
 		} else {

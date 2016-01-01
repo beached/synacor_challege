@@ -382,7 +382,7 @@ std::string vm_trace::op_t::to_json( ) const {
 	static auto const & decoder = instructions::decoder( );
 
 
-	ss << "{ \"op_code\": " << decoder[op_code].name << ", ";
+	ss << "{ \"op_code\": \"" << decoder[op_code].name << "\", ";
 	size_t param = 0;
 	for( ; param < params.size( ); ++param ) {
 		if( param > 0 ) {
@@ -413,7 +413,7 @@ void vm_trace::memory_change_t::clear( ) {
 
 std::string vm_trace::memory_change_t::to_json( ) const {
 	if( address < 0 || old_value < 0 || new_value < 0 ) {
-		return "{ nil }";
+		return "null";
 	}
 	std::stringstream ss;
 	ss << "{ \"address\": " << address << ", ";
@@ -425,14 +425,14 @@ std::string vm_trace::memory_change_t::to_json( ) const {
 std::string vm_trace::to_json( ) const {
 	assert( instruction_ptrs.size( ) == op_codes.size( ) && op_codes.size( ) == memory_changes.size( ) );
 	std::stringstream ss;
-	ss << "{ [";
+	ss << "{ \"trace\": [";
 	for( size_t n = 0; n < instruction_ptrs.size( ); ++n ) {
 		if( n > 0 ) {
 			ss << ",";
 		}
-		ss << "\n{\n\t\"instruction_ptr\": " << instruction_ptrs[n] << ",\n";
-		ss << "\t\"op_code\": " << op_codes[n].to_json( ) << ",\n";
-		ss << "\t\"memory_change\": " << memory_changes[n].to_json( ) << " }";
+		ss << "\n{\n\"instruction_ptr\": " << instruction_ptrs[n] << ",\n";
+		ss << "\"op_code\": " << op_codes[n].to_json( ) << ",\n";
+		ss << "\"memory_change\": " << memory_changes[n].to_json( ) << " }";
 	}
 	ss << "\n] }";
 	return ss.str( );
