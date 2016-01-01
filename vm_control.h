@@ -25,10 +25,13 @@
 #include <boost/utility/string_ref.hpp>
 #include <limits>
 #include <cstdint>
+#include <vector>
 #include "vm.h"
 
 struct vm_control final {
 	vm_control( ) = delete;
+
+	static void show_asm(virtual_machine_t& vm, std::vector<uint16_t> const& tokens);
 
 	template<typename Tokens>
 	static void show_asm( virtual_machine_t & vm, Tokens const & tokens ) {
