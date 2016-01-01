@@ -26,9 +26,12 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+#include "vm.h"
 
 struct parse_action_t {
-	using action_item_t = std::tuple<bool, std::function<void( std::vector<std::string> )>>;
+	// bool - tokenize parameters, std::string - help msg, std::function<...> action callback
+	using action_item_t = std::tuple<bool, std::string, std::function<void( std::vector<std::string> )>>;
+	
 	std::unordered_map<std::string, action_item_t> actions;
 	std::string separators;
 

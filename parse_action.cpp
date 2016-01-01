@@ -48,6 +48,6 @@ void parse_action_t::parse( std::string str ) const {
 		tokens.resize( 1 );
 		tokens[0] = str.substr( tokens[0].size( ) + 1 );
 	}
-	std::get<1>( action )(tokens);
+	std::get<1>( action )( tokens );
 }
 

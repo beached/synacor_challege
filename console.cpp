@@ -27,6 +27,7 @@
 #include <boost/algorithm/string.hpp>
 #include "vm_control.h"
 #include "file_helper.h"
+#include "parse_action.h"
 
 namespace {
 	void print_help( ) {
@@ -59,11 +60,27 @@ namespace {
 		std::cout << "stoptrace -> stop the full instruction/memory modification trace\n";
 		std::cout << "savetrace [filename] -> save previous trace to [filename]/[filenaem].state or sc_<time since epoch>_trace.json/sc_<time since epoch>_trace.json.state if not specified\n";
 		std::cout << "\n";
-	}	
+	}
+
+
 }
 
 
 void console( virtual_machine_t & vm ) {
+	parse_action_t parse_action( {
+		{ "saveasm", { false, "[filename] -> save assembly of memory to to [filename] or sc_<time since epoch>_asm.txt if not specified\n", [&]( auto tokens ) {
+		if( tokens.size( ) > 1 ) {
+			vm_control::save_asm( vm, tokens[0] );
+		} else {
+			vm_control::save_asm( vm, generate_unique_file_name( "sc_", "_asm", "txt" ) );
+		}
+	} } },
+		{ "showasm", { true, "[from_address][to_address]->print all memory to screen", [&]( auto tokens ) {
+		vm_control::show_asm( vm, tokens );
+	} } }
+
+	} );
+
 	std::cin.clear( );
 
 	print_help( );
