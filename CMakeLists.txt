@@ -40,6 +40,8 @@ set( SOURCE_FILES
 	file_helper.cpp
 	file_helper.h
 	helpers.h
+	parse_action.cpp
+	parse_action.h
 	memory_helper.h
 	vm.cpp
 	vm.h
