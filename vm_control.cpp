@@ -57,11 +57,11 @@ namespace {
 void vm_control::show_asm( virtual_machine_t& vm, std::vector<uint16_t> const& tokens ) {
 	uint16_t from_address = 0;
 	uint16_t to_address = std::numeric_limits<uint16_t>::max( );
-	if( tokens.size( ) > 1 ) {
-		from_address = tokens[1];
+	if( tokens.size( ) > 0 ) {
+		from_address = tokens[0];
 	}
-	if( tokens.size( ) > 2 ) {
-		to_address = tokens[2];
+	if( tokens.size( ) > 1 ) {
+		to_address = tokens[1];
 	}
 
 	full_dump( vm, from_address, to_address );

@@ -109,7 +109,7 @@ void console( virtual_machine_t & vm ) {
 				if( vm.instruction_ptr > 20 ) {
 					first = vm.instruction_ptr - 20;
 				}
-				if( 32767 - vm.instruction_ptr > 20 ) {
+				if( (vm.memory.size( ) - 1) - vm.instruction_ptr > 20 ) {
 					second = vm.instruction_ptr + 20;
 				}
 				vm_control::show_asm( vm, std::vector<uint16_t>{ first, second } );
