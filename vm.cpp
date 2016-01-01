@@ -346,34 +346,35 @@ std::string dump_memory( virtual_machine_t & vm, uint16_t from_address, uint16_t
 op_t::op_t( uint16_t OpCode, std::vector<uint16_t> Params ): op_code( OpCode ), params( std::move( Params ) ) { }
 
 std::string op_t::to_json( ) const {
-	auto escape = []( int i ) {
-		auto str = std::to_string( i );
-		while( str.size( ) < 3 ) {
-			str = "0" + str;
-		}
-		str = "\\" + str;
-		return str;
-	};
 	std::stringstream ss;
 
-	auto mem_to_str = [&escape]( auto i, bool raw_ascii = false ) {
-		std::stringstream ss;
-		if( raw_ascii ) {
-			ss << "\"";
-			if( is_alphanum( i ) ) {
-				ss << static_cast<unsigned char>(i);
-			} else {
-				ss << escape( i );
+	auto mem_to_str = []( auto i, bool raw_ascii = false ) {
+		auto escape = []( int v ) {
+			auto str = std::to_string( v );
+			while( str.size( ) < 3 ) {
+				str = "0" + str;
 			}
-			ss << "\"";
+			str = "\\" + str;
+			return str;
+		};
+
+		std::stringstream ss2;
+		if( raw_ascii ) {
+			ss2 << "\"";
+			if( is_alphanum( i ) ) {
+				ss2 << static_cast<unsigned char>(i);
+			} else {
+				ss2 << escape( i );
+			}
+			ss2 << "\"";
 		} else if( virtual_machine_t::is_register( i ) ) {
-			ss << "\"R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "\"";
+			ss2 << "\"R" << static_cast<int>(i - virtual_machine_t::REGISTER0) << "\"";
 		} else if( i < virtual_machine_t::REGISTER0 ) {
-			ss << static_cast<int>(i);
+			ss2 << static_cast<int>(i);
 		} else {
-			ss << "\"INVALID(" << static_cast<int>(i) << ")\"";
+			ss2 << "\"INVALID(" << static_cast<int>(i) << ")\"";
 		}
-		return ss.str( );
+		return ss2.str( );
 	};
 
 	static auto const & decoder = instructions::decoder( );

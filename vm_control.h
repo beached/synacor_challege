@@ -127,7 +127,7 @@ struct vm_control final {
 		auto addr = convert<uint16_t>( tokens[1] );
 		std::cout << "Clear breakpoint at " << addr << "\n";
 		assert( addr < vm.memory.size( ) );
-		vm.breakpoints.erase( addr );
+		vm.debugging.breakpoints.erase( addr );
 	}
 
 	static void save_asm( virtual_machine_t & vm, boost::string_ref fname );
