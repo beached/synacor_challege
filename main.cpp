@@ -63,6 +63,7 @@ int main( int argc, char** argv ) {
 	}
 	
 	// Start main loop
+	vm.should_break = true;
 	while( true ) {		
 		vm.tick( );
 		if( !should_break.test_and_set( ) ) {

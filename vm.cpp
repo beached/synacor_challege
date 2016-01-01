@@ -55,7 +55,6 @@ virtual_machine_t::virtual_machine_t( boost::string_ref filename ):
 	enable_tracing( false ) {
 
 	load_state( filename );
-	std::cout << "READY\n";
 }
 
 void virtual_machine_t::clear( ) {
