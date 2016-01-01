@@ -22,10 +22,10 @@
 
 #pragma once
 
-#include <boost/utility/string_ref.hpp>
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <vector>
 
 struct parse_action_t {
 	using action_item_t = std::tuple<bool, std::function<void( std::vector<std::string> )>>;
@@ -35,5 +35,5 @@ struct parse_action_t {
 	parse_action_t( std::vector<std::pair<std::string const, action_item_t>> Actions );
 	parse_action_t( std::string Separators, std::vector<std::pair<std::string const, action_item_t>> Actions );
 
-	void parse( boost::string_ref str ) const;
+	void parse( std::string str ) const;
 };	// struct parse_action_t
