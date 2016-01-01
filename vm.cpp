@@ -347,9 +347,9 @@ std::string dump_memory( virtual_machine_t & vm, uint16_t from_address, uint16_t
 	return ss.str( );
 }
 
-vm_trace::op_t::op_t( uint16_t OpCode, std::vector<uint16_t> Params ): op_code( OpCode ), params( std::move( Params ) ) { }
+op_t::op_t( uint16_t OpCode, std::vector<uint16_t> Params ): op_code( OpCode ), params( std::move( Params ) ) { }
 
-std::string vm_trace::op_t::to_json( ) const {
+std::string op_t::to_json( ) const {
 	auto escape = []( int i ) {
 		auto str = std::to_string( i );
 		while( str.size( ) < 3 ) {
@@ -360,7 +360,8 @@ std::string vm_trace::op_t::to_json( ) const {
 	};
 	std::stringstream ss;
 
-	auto mem_to_str = [&]( auto i, bool raw_ascii = false ) {
+	auto mem_to_str = [&escape]( auto i, bool raw_ascii = false ) {
+		std::stringstream ss;
 		if( raw_ascii ) {
 			ss << "\"";
 			if( is_alphanum( i ) ) {
@@ -380,43 +381,40 @@ std::string vm_trace::op_t::to_json( ) const {
 	};
 
 	static auto const & decoder = instructions::decoder( );
+	
 
+	ss << "{ \"op_code\": \"" << decoder[op_code].name << "\", \"params\": [";
 
-	ss << "{ \"op_code\": \"" << decoder[op_code].name << "\", ";
-	size_t param = 0;
-	for( ; param < params.size( ); ++param ) {
+	for( size_t param = 0; param < params.size( ); ++param ) {
 		if( param > 0 ) {
-			ss << ", ";
+			ss << ", "; 
 		}
-		ss << "\"param_" << static_cast<char>('a' + param) << "\": " << (params[param] < 0 ? "nil" : mem_to_str( params[param], op_code == 19 ));
+		ss << (params[param] < 0 ? "null" : mem_to_str( params[param], op_code == 19 ));				
 	}
-
-	for( ; param < 3; ++param ) {
-		if( param > 0 ) {
-			ss << ", ";
-		}
-		ss << "\"param_" << static_cast<char>('a' + param) << "\": nil";
-	}
-	ss << " }";
+	ss << "] }";
 	return ss.str( );
 }
 
-vm_trace::memory_change_t::memory_change_t( uint16_t Address, uint16_t Old ): address( Address ), old_value( Old ), new_value( -1 ) { }
+memory_change_t::memory_change_t( uint16_t Address, uint16_t Old ): address( Address ), old_value( Old ), new_value( -1 ) { }
 
-vm_trace::memory_change_t::memory_change_t( ): address( -1 ), old_value( -1 ), new_value( -1 ) { }
+memory_change_t::memory_change_t( ): address( -1 ), old_value( -1 ), new_value( -1 ) { }
 
-void vm_trace::memory_change_t::clear( ) {
+void memory_change_t::clear( ) {
 	address = -1;
 	old_value = -1;
 	new_value = -1;
 }
 
-std::string vm_trace::memory_change_t::to_json( ) const {
+std::string memory_change_t::to_json( ) const {
 	if( address < 0 || old_value < 0 || new_value < 0 ) {
 		return "null";
 	}
 	std::stringstream ss;
-	ss << "{ \"address\": " << address << ", ";
+	if( address < virtual_machine_t::REGISTER0 ) {
+		ss << "{ \"address\": " << address << ", ";
+	} else {
+		ss << "{ \"address\": \"R" << (address- virtual_machine_t::REGISTER0) << "\", ";
+	}
 	ss << "\"old_value\": " << old_value << ", ";
 	ss << "\"new_value\": " << new_value << " }";
 	return ss.str( );

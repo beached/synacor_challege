@@ -30,27 +30,27 @@
 #include "helpers.h"
 #include "memory_helper.h"
 
-struct vm_trace {
-	struct op_t {
-		uint16_t op_code;
-		std::vector<uint16_t> params;
-		op_t( uint16_t OpCode, std::vector<uint16_t> Params = { } );
+struct op_t final {
+	uint16_t op_code;
+	std::vector<uint16_t> params;
+	op_t( uint16_t OpCode, std::vector<uint16_t> Params = { } );
 
-		std::string to_json( ) const;
-	};
+	std::string to_json( ) const;
+};
 
-	struct memory_change_t {
-		int32_t address;
-		int32_t old_value;
-		int32_t new_value;
+struct memory_change_t final {
+	int32_t address;
+	int32_t old_value;
+	int32_t new_value;
 
-		memory_change_t( );
-		memory_change_t( uint16_t Address, uint16_t Old );
+	memory_change_t( );
+	memory_change_t( uint16_t Address, uint16_t Old );
 
-		void clear( );
-		std::string to_json( ) const;
-	};	// struct memory_change
+	void clear( );
+	std::string to_json( ) const;
+};	// struct memory_change
 
+struct vm_trace final {
 	std::vector<uint16_t> instruction_ptrs;
 	std::vector<op_t> op_codes;
 	std::vector<memory_change_t> memory_changes;
