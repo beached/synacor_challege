@@ -36,11 +36,13 @@ int main( int argc, char** argv ) {
 		std::cerr << "Must supply a vm file" << std::endl;
 		exit( EXIT_FAILURE );
 	}
+	virtual_machine_t vm( argv[1] );
+#ifdef DEBUG
 	std::atomic_flag should_break = ATOMIC_FLAG_INIT;
 	boost::asio::io_service io;
 	boost::asio::signal_set signals(io, SIGINT);
 
-	virtual_machine_t vm( argv[1] );
+	
 
 	std::function<void( boost::asio::signal_set&, boost::system::error_code, int )> handler;
 
@@ -64,12 +66,14 @@ int main( int argc, char** argv ) {
 	
 	// Start main loop
 	vm.debugging.should_break = true;
+#endif
 	while( true ) {		
 		vm.tick( );
+#ifdef DEBUG
 		if( !should_break.test_and_set( ) ) {
 			vm.debugging.should_break = true;
 		}
-		
+#endif		
 	}
 
 	return EXIT_SUCCESS;
