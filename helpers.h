@@ -27,6 +27,7 @@
 #include <string>
 #include <cassert>
 #include <boost/utility/string_ref.hpp>
+#include <sstream>
 
 template<typename Iterator>
 void zero_fill( Iterator begin, Iterator end ) {
