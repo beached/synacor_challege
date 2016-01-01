@@ -74,15 +74,15 @@ void vm_control::get_regs( virtual_machine_t & vm ) {
 }
 
 void vm_control::get_bps( virtual_machine_t & vm ) {
-	std::cout << "Current breakpoints(" << vm.breakpoints.size( ) << ")\n";
-	for( auto const & bp : vm.breakpoints ) {
+	std::cout << "Current breakpoints(" << vm.debugging.breakpoints.size( ) << ")\n";
+	for( auto const & bp : vm.debugging.breakpoints ) {
 		std::cout << bp << "\n";
 	}
 }
 
 void vm_control::clear_bps( virtual_machine_t & vm ) {
-	std::cout << "Clearing " << vm.breakpoints.size( ) << " breakpoints\n";
-	vm.breakpoints.clear( );
+	std::cout << "Clearing " << vm.debugging.breakpoints.size( ) << " breakpoints\n";
+	vm.debugging.breakpoints.clear( );
 }
 
 void vm_control::save_state( virtual_machine_t & vm, boost::string_ref fname ) {
@@ -110,15 +110,15 @@ void vm_control::show_program_stack( virtual_machine_t & vm ) {
 }
 
 void vm_control::save_trace(virtual_machine_t& vm, boost::string_ref fname) {
-	save_to_text_file( fname, vm.trace.to_json( ) );
+	save_to_text_file( fname, vm.debugging.trace.to_json( ) );
 	boost::filesystem::rename( "trace_state.bin", fname.to_string( ) + ".state" );
 }
 
 void vm_control::start_tracing( virtual_machine_t & vm ) {
 	save_state( vm, "trace_state.bin" );
-	vm.enable_tracing = true;
+	vm.debugging.enable_tracing = true;
 }
 
 void vm_control::stop_tracing( virtual_machine_t & vm ) {
-	vm.enable_tracing = false;
+	vm.debugging.enable_tracing = false;
 }

@@ -69,11 +69,14 @@ struct virtual_machine_t {
 	virtual_memory_t<32768u> memory;
 	std::vector<uint16_t> argument_stack;
 	std::vector<uint16_t> program_stack;
-	bool should_break;
 	uint16_t instruction_ptr;
-	std::set<uint16_t> breakpoints;
-	vm_trace trace;
-	bool enable_tracing;
+	struct debugging_t {
+		bool should_break;
+		std::set<uint16_t> breakpoints;
+		vm_trace trace;	
+		bool enable_tracing;
+		debugging_t( ): should_break( false ), breakpoints( ), trace( ), enable_tracing( ) { }
+	} debugging;
 
 	static uint16_t const MODULO = 32768;
 	static uint16_t const REGISTER0 = 32768;

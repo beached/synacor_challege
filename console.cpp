@@ -123,7 +123,7 @@ void console( virtual_machine_t & vm ) {
 			vm_control::show_program_stack( vm );
 		} else if( tokens[0] == "go" ) {
 			std::cout << "Resuming program\n\n";
-			vm.should_break = false;
+			vm.debugging.should_break = false;
 			return;
 		} else if( tokens[0] == "quit" ) {
 			std::cout << "Exiting Program\n\n\n";

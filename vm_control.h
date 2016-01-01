@@ -115,7 +115,7 @@ struct vm_control final {
 		auto addr = convert<uint16_t>( tokens[1] );
 		std::cout << "Setting breakpoint at " << addr << "\n";
 		assert( addr < vm.memory.size( ) );
-		vm.breakpoints.insert( addr );
+		vm.debugging.breakpoints.insert( addr );
 	}
 
 	template<typename Tokens>

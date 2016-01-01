@@ -50,7 +50,7 @@ int main( int argc, char** argv ) {
 				std::cout << "EXITING" << std::endl;
 				exit( EXIT_SUCCESS );
 			}
-			if( !vm.should_break ) {
+			if( !vm.debugging.should_break ) {
 				should_break.clear( );
 			}
 			this_.async_wait( boost::bind( handler, boost::ref( this_ ), _1, _2 ) );
@@ -63,11 +63,11 @@ int main( int argc, char** argv ) {
 	}
 	
 	// Start main loop
-	vm.should_break = true;
+	vm.debugging.should_break = true;
 	while( true ) {		
 		vm.tick( );
 		if( !should_break.test_and_set( ) ) {
-			vm.should_break = true;
+			vm.debugging.should_break = true;
 		}
 		
 	}
