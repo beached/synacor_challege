@@ -202,7 +202,7 @@ void virtual_machine_t::tick( bool is_debugger ) {
 		argument_stack.push_back( fetch_opcode( ) );
 	}
 
-#ifndef NDEBUG
+#ifdef DEBUG
 	if( !is_debugger && (debugging.should_break || debugging.breakpoints.count( instruction_ptr ) > 0 || does_intersect( debugging.memory_traps, argument_stack )) ) {
 		std::cout << "Breaking at address " << instruction_ptr << "\n";
 		console( *this );
@@ -213,7 +213,7 @@ void virtual_machine_t::tick( bool is_debugger ) {
 	}
 #endif
 	decoded.instruction( *this );
-#ifndef NDEBUG
+#ifdef DEBUG
 	if( decoded.do_memory_trace && debugging.enable_tracing ) {
 		finish_trace( *this, decoded );
 	}
