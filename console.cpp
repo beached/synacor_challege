@@ -22,9 +22,10 @@
 
 #include "vm.h"
 #include <iostream>
-#include <boost/algorithm/string.hpp>
+#include <string>
 #include "console.h"
-#include <fstream>
+#include <boost/algorithm/string.hpp>
+#include "vm_control.h"
 #include "file_helper.h"
 
 namespace {
@@ -51,193 +52,9 @@ namespace {
 		std::cout << "savestate [filename] -> save the state of program to [filename] or sc_<time since epoch>_state.bin if not specified\n";
 		std::cout << "loadtate <filename> -> load the state of program from <filename>\n";
 		std::cout << "\n";
-	}
-
-	template<typename T>
-	T convert( boost::string_ref orig ) {
-		std::stringstream ss;
-		ss << orig;
-		T result;
-		ss >> result;
-		return result;
-	}
-
-	std::string dump_regs( virtual_machine_t & vm ) {
-		std::stringstream ss;
-		for( size_t n = 0; n < vm.registers.size( ); ++n ) {
-			ss << "REG" << n << ": " << vm.registers[n] << "\n";
-		}
-		ss << "Instruction ptr: " << vm.instruction_ptr << "\n";
-		return ss.str( );
-	}
+	}	
 }
 
-struct vm_control final {
-
-	template<typename Tokens>
-	static void show_asm( virtual_machine_t & vm, Tokens const & tokens  ) {
-		uint16_t from_address = 0;
-		uint16_t to_address = std::numeric_limits<uint16_t>::max( );
-		if( tokens.size( ) > 1 ) {
-			from_address = convert<uint16_t>( tokens[1] );
-		}
-		if( tokens.size( ) > 2 ) {
-			to_address = convert<uint16_t>( tokens[2] );
-		}
-
-		full_dump( vm, from_address, to_address );
-		std::cout << "\n\n";
-	}
-
-	static void save_asm( virtual_machine_t & vm, boost::string_ref fname ) {
-		std::ofstream fout;
-		fout.open( fname.data( ) );
-		if( !fout ) {
-			std::cerr << "Error saving memory dump to " << fname << "\n";
-		} else {
-			fout << full_dump_string( vm );
-			fout.close( );
-			std::cout << "Saved file to " << fname << "\n";
-		}
-	}
-
-	static void get_ip( virtual_machine_t & vm ) {
-		std::cout << "Current instruction ptr is " << vm.instruction_ptr << "\n";
-	}
-
-	template<typename Tokens>
-	static void set_ip( virtual_machine_t & vm, Tokens const & tokens ) {
-		if( tokens.size( ) != 2 ) {
-			std::cout << "Error\n";
-			return;
-		}
-		auto new_ip = convert<uint16_t>( tokens[1] );
-		assert( new_ip < vm.memory.size( ) );
-		std::cout << "Setting instruction ptr to " << new_ip << "\n";
-		vm.instruction_ptr = new_ip;
-	}
-
-	template<typename Tokens>
-	void static get_mem( virtual_machine_t & vm, Tokens const & tokens ) {
-		if( tokens.size( ) != 2 ) {
-			std::cout << "Error\n";
-			return;
-		}
-		auto addr = convert<uint16_t>( tokens[1] );
-		assert( addr < vm.memory.size( ) );
-		std::cout << "Memory at address " << addr << " has a value of " << vm.memory[addr] << "\n";
-	}
-
-	template<typename Tokens>
-	void static set_mem( virtual_machine_t & vm, Tokens const & tokens ) {
-		if( tokens.size( ) != 3 ) {
-			std::cout << "Error\n";
-		}
-		auto addr = convert<uint16_t>( tokens[1] );
-		auto value = convert<uint16_t>( tokens[2] );
-		assert( addr < vm.memory.size( ) );
-		std::cout << "Setting memory at address " << addr << " has with a value of " << value << "\n";
-		vm.memory[addr] = value;
-
-	}
-
-	template<typename Tokens>
-	void static get_reg( virtual_machine_t & vm, Tokens const & tokens ) { 
-		if( tokens.size( ) != 2 ) {
-			std::cout << "Error\n";
-			return;
-		}
-		auto addr = convert<uint16_t>( tokens[1] );
-		assert( addr < vm.registers.size( ) );
-		std::cout << "Register " << addr << " has a value of " << vm.registers[addr] << "\n";
-
-	}
-
-	template<typename Tokens>
-	void static set_reg( virtual_machine_t & vm, Tokens const & tokens ) { 
-		if( tokens.size( ) != 3 ) {
-			std::cout << "Error\n";
-			return;
-		}
-		auto addr = convert<uint16_t>( tokens[1] );
-		auto value = convert<uint16_t>( tokens[2] );
-		assert( addr < vm.registers.size( ) );
-		std::cout << "Setting register " << addr << " with a value of " << value << "\n";
-		vm.registers[addr] = value;
-	}
-
-	void static tick( virtual_machine_t & vm ) { 
-		vm.tick( true );
-		get_ip( vm );
-	}
-
-	void static get_regs( virtual_machine_t & vm ) { 
-		std::cout << "Current register values\n";
-		std::cout << dump_regs( vm ) << "\n";
-	}
-
-	void static get_bps( virtual_machine_t & vm ) {
-		std::cout << "Current breakpoints(" << vm.breakpoints.size( ) << ")\n";
-		for( auto const & bp : vm.breakpoints ) {
-			std::cout << bp << "\n";
-		}
-	}
-
-	void static clear_bps( virtual_machine_t & vm ) { 
-		std::cout << "Clearing " << vm.breakpoints.size( ) << " breakpoints\n";
-		vm.breakpoints.clear( );
-	}
-
-
-	template<typename Tokens>
-	void static set_bp( virtual_machine_t & vm, Tokens const & tokens ) { 
-		if( tokens.size( ) != 2 ) {
-			std::cout << "Error\n";
-			return;
-		}
-		auto addr = convert<uint16_t>( tokens[1] );
-		std::cout << "Setting breakpoint at " << addr << "\n";
-		assert( addr < vm.memory.size( ) );
-		vm.breakpoints.insert( addr );
-	}
-
-
-	template<typename Tokens>
-	void static clear_bp( virtual_machine_t & vm, Tokens const & tokens ) { 
-		if( tokens.size( ) != 2 ) {
-			std::cout << "Error\n";
-			return;
-		}
-		auto addr = convert<uint16_t>( tokens[1] );
-		std::cout << "Clear breakpoint at " << addr << "\n";
-		assert( addr < vm.memory.size( ) );
-		vm.breakpoints.erase( addr );
-	}
-
-	void static save_state( virtual_machine_t & vm, boost::string_ref fname ) {
-		vm.save_state( fname );
-		std::cout << "State saved to file '" << fname << "'\n";
-	}
-
-	void static load_state( virtual_machine_t & vm, boost::string_ref fname ) {
-		vm.load_state( fname );
-		std::cout << "Loaded state from file '" << fname << "'\n";
-	}
-
-	void static show_argument_stack( virtual_machine_t & vm ) { 
-		std::cout << "Current argument stack(" << vm.argument_stack.size( ) << ")\n";
-		for( size_t n = 0; n < vm.argument_stack.size( ); ++n ) {
-			std::cout << n << ": " << vm.argument_stack[n] << "\n";
-		}
-	}
-
-	void static show_program_stack( virtual_machine_t & vm ) {
-		std::cout << "Current program stack(" << vm.program_stack.size( ) << ")\n";
-		for( size_t n = 0; n < vm.program_stack.size( ); ++n ) {
-			std::cout << n << ": " << vm.program_stack[n] << "\n";
-		}
-	}
-};	//struct vm_control
 
 void console( virtual_machine_t & vm ) {
 	std::cin.clear( );
@@ -272,7 +89,7 @@ void console( virtual_machine_t & vm ) {
 		} else if( tokens[0] == "getreg" ) {
 			vm_control::get_reg( vm, tokens );
 		} else if( tokens[0] == "setreg" ) {
-			vm_control::set_reg( vm, tokens );	
+			vm_control::set_reg( vm, tokens );
 		} else if( tokens[0] == "tick" ) {
 			vm_control::tick( vm );
 		} else if( tokens[0] == "getregs" ) {

@@ -21,9 +21,9 @@
 // SOFTWARE.
 
 #pragma once
+
 #include "vm.h"
 #include <iostream>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 void console( virtual_machine_t & vm );
-

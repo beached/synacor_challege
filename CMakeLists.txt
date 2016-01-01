@@ -30,8 +30,10 @@ set( SOURCE_FILES
 	file_helper.h
 	helpers.h
 	memory_helper.h
-	vm.h
 	vm.cpp
+	vm.h
+	vm_control.cpp
+	vm_control.h
 )
 
 include_directories( SYSTEM ${Boost_INCLUDE_DIRS} )

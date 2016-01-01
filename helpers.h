@@ -26,7 +26,7 @@
 #include <iostream>
 #include <string>
 #include <cassert>
-
+#include <boost/utility/string_ref.hpp>
 
 template<typename Iterator>
 void zero_fill( Iterator begin, Iterator end ) {
@@ -205,3 +205,12 @@ public:
 		return result;
 	}
 };	// class term_buff_t
+
+template<typename T>
+T convert( boost::string_ref orig ) {
+	std::stringstream ss;
+	ss << orig;
+	T result;
+	ss >> result;
+	return result;
+}
