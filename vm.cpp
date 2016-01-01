@@ -55,6 +55,7 @@ virtual_machine_t::virtual_machine_t( boost::string_ref filename ):
 	enable_tracing( false ) {
 
 	load_state( filename );
+	std::cout << "READY\n";
 }
 
 void virtual_machine_t::clear( ) {
@@ -173,9 +174,7 @@ void virtual_machine_t::tick( bool is_debugger ) {
 		argument_stack.push_back( fetch_opcode( ) );
 	}
 
-	auto trace1 = false;
 	if( enable_tracing ) {
-		trace1 = true;
 		trace.instruction_ptrs.push_back( instruction_ptr );
 		trace.op_codes.emplace_back( decoded.op_code, argument_stack );
 		if( decoded.do_trace ) {
@@ -185,8 +184,9 @@ void virtual_machine_t::tick( bool is_debugger ) {
 		}
 	}
 	decoded.instruction( *this );
-	if( trace1 && enable_tracing ) {
-		auto new_value = get_reg_or_mem( trace.memory_changes.rbegin( )->address );
+	if( decoded.do_trace && enable_tracing ) {
+		assert( trace.memory_changes.rbegin( )->address >= 0 );
+		auto new_value = get_reg_or_mem( static_cast<uint16_t>(trace.memory_changes.rbegin( )->address) );
 		if( trace.memory_changes.rbegin( )->old_value != new_value ) {
 			trace.memory_changes.rbegin( )->new_value = new_value;
 		} else {
