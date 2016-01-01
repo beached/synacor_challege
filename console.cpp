@@ -44,7 +44,7 @@ namespace {
 		std::cout << "getregs -> display value in all registers and intruction ptr\n";
 		std::cout << "showargstack -> display the argument stack items\n";
 		std::cout << "showprogstack -> display the program stack items\n";
-		std::cout << "tick []-> run next instruction in vm.  If any other parameter is also passed, will show previous/next 10 lines and registers\n";
+		std::cout << "tick [num lines]-> run next instruction in vm.  Optionally, show previous/next [num lines] lines and registers\n";
 		std::cout << "getbps -> display all breakpoints\n";
 		std::cout << "clearbps -> clear all breakpoints\n";
 		std::cout << "setbp <address> -> set breakpoint at <address>\n";
@@ -104,13 +104,14 @@ void console( virtual_machine_t & vm ) {
 		} else if( tokens[0] == "tick" ) {
 			vm_control::tick( vm );
 			if( tokens.size( ) > 1 ) {
+				auto num_lines = convert<uint16_t>( tokens[1] );
 				uint16_t  first = 0;
 				auto second = std::numeric_limits<uint16_t>::max( );
-				if( vm.instruction_ptr > 20 ) {
-					first = vm.instruction_ptr - 20;
+				if( vm.instruction_ptr > num_lines ) {
+					first = vm.instruction_ptr - num_lines;
 				}
-				if( (vm.memory.size( ) - 1) - vm.instruction_ptr > 20 ) {
-					second = vm.instruction_ptr + 20;
+				if( (vm.memory.size( ) - 1) - vm.instruction_ptr > num_lines ) {
+					second = vm.instruction_ptr + num_lines;
 				}
 				vm_control::show_asm( vm, std::vector<uint16_t>{ first, second } );
 			}
