@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
+set( CMAKE_CONFIGURATION_TYPES "Debug;Release" )
 project(synacor_challenge)
 
-set( CMAKE_CONFIGURATION_TYPES "Debug;Release" )
 if( NOT CMAKE_BUILD_TYPE )
 	set( CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: ${CMAKE_CONFIGURATION_TYPES}" FORCE )
 endif( )
