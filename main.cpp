@@ -31,22 +31,15 @@
 #include <atomic>
 #include "vm.h"
 
-static std::atomic_flag should_break = ATOMIC_FLAG_INIT;
-static boost::asio::io_service io;
-static boost::asio::signal_set signals(io, SIGINT);
-
-template<typename Handler>
-void start_handler( Handler handler ) {
-	should_break.test_and_set( );
-	signals.async_wait(boost::bind(handler, boost::ref(signals), _1, _2));
-	boost::thread(boost::bind(&boost::asio::io_service::run, boost::ref(io))).detach( );
-}
-
 int main( int argc, char** argv ) {
 	if( argc <= 1 ) {
 		std::cerr << "Must supply a vm file" << std::endl;
 		exit( EXIT_FAILURE );
 	}
+	std::atomic_flag should_break = ATOMIC_FLAG_INIT;
+	boost::asio::io_service io;
+	boost::asio::signal_set signals(io, SIGINT);
+
 	virtual_machine_t vm( argv[1] );
 
 	std::function<void( boost::asio::signal_set&, boost::system::error_code, int )> handler;
@@ -63,9 +56,13 @@ int main( int argc, char** argv ) {
 			this_.async_wait( boost::bind( handler, boost::ref( this_ ), _1, _2 ) );
 		}
 	};
-	start_handler( handler );
+	{	// start SIGINT handler
+		should_break.test_and_set( );
+		signals.async_wait(boost::bind(handler, boost::ref(signals), _1, _2));
+		boost::thread(boost::bind(&boost::asio::io_service::run, boost::ref(io))).detach( );
+	}
 	
-
+	// Start main loop
 	while( true ) {		
 		vm.tick( );
 		if( !should_break.test_and_set( ) ) {
