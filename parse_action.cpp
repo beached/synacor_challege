@@ -23,16 +23,27 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/utility/string_ref.hpp>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <vector>
 
 #include "parse_action.h"
 
+parse_action_t::action_item_t::action_item_t( bool TokenizeParameters, std::string HelpMessage, std::function<void( std::vector<std::string> )> Action ):
+	tokenize_parameters( TokenizeParameters ),
+	help_message( std::move( HelpMessage ) ),
+	action( Action ) { }
 
+std::pair<std::string, parse_action_t::action_item_t> make_action( std::string key, bool tokenize_parameters, std::string help_message, std::function<void( std::vector<std::string> )> action ) {
+	return std::make_pair( key, parse_action_t::action_item_t{ tokenize_parameters, help_message, action } );
+}
 
-// parse_action_t::parse_action_t( std::initializer_list<std::pair<std::string const, parse_action_t::action_item_t>> Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( "\t " ) { }
-// parse_action_t::parse_action_t( std::string Separators, std::initializer_list<std::pair<std::string const, parse_action_t::action_item_t>> Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( std::move( Separators ) ) { }
+parse_action_t::parse_action_t( std::initializer_list<std::pair<std::string, parse_action_t::action_item_t>> Actions ): actions( ), separators( "\t " ) {
+	for( auto const & item: Actions ) {
+		actions.emplace( item.first, item.second );
+	}
+
+}
+// parse_action_t::parse_action_t( std::string Separators, std::initializer_list<std::pair<std::string, parse_action_t::action_item_t>> Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( Separators ) { }
 
 void parse_action_t::parse( std::string str ) const {
 	std::vector<std::string> tokens;
@@ -42,12 +53,12 @@ void parse_action_t::parse( std::string str ) const {
 		return;		// TODO define error action
 	}
 	auto const & action = action_it->second;
-	if( std::get<0>( action ) ) {
+	if( action.tokenize_parameters ) {
 		tokens.erase( tokens.begin( ) );
 	} else {
 		tokens.resize( 1 );
 		tokens[0] = str.substr( tokens[0].size( ) + 1 );
 	}
-	std::get<2>( action )( tokens );
+	action.action( tokens );
 }
 
