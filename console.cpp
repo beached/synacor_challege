@@ -28,6 +28,7 @@
 #include "vm_control.h"
 #include "file_helper.h"
 #include "parse_action.h"
+#include <tuple>
 
 namespace {
 	void print_help( ) {
@@ -75,7 +76,7 @@ void console( virtual_machine_t & vm ) {
 			vm_control::save_asm( vm, generate_unique_file_name( "sc_", "_asm", "txt" ) );
 		}
 	} } },
-		{ "showasm", { true, "[from_address][to_address]->print all memory to screen", [&]( auto tokens ) {
+	{ "showasm", { true, "[from_address][to_address]->print all memory to screen", [&]( auto tokens ) {
 		vm_control::show_asm( vm, tokens );
 	} } }
 

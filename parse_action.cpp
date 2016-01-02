@@ -31,8 +31,8 @@
 
 
 
-parse_action_t::parse_action_t( std::vector<std::pair<std::string const, parse_action_t::action_item_t>> Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( "\t " ) { }
-parse_action_t::parse_action_t( std::string Separators, std::vector<std::pair<std::string const, parse_action_t::action_item_t>> Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( std::move( Separators ) ) { }
+// parse_action_t::parse_action_t( std::initializer_list<std::pair<std::string const, parse_action_t::action_item_t>> Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( "\t " ) { }
+// parse_action_t::parse_action_t( std::string Separators, std::initializer_list<std::pair<std::string const, parse_action_t::action_item_t>> Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( std::move( Separators ) ) { }
 
 void parse_action_t::parse( std::string str ) const {
 	std::vector<std::string> tokens;
@@ -48,6 +48,6 @@ void parse_action_t::parse( std::string str ) const {
 		tokens.resize( 1 );
 		tokens[0] = str.substr( tokens[0].size( ) + 1 );
 	}
-	std::get<1>( action )( tokens );
+	std::get<2>( action )( tokens );
 }
 

@@ -26,7 +26,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include "vm.h"
+
 
 struct parse_action_t {
 	// bool - tokenize parameters, std::string - help msg, std::function<...> action callback
@@ -35,8 +35,13 @@ struct parse_action_t {
 	std::unordered_map<std::string, action_item_t> actions;
 	std::string separators;
 
-	parse_action_t( std::vector<std::pair<std::string const, action_item_t>> Actions );
-	parse_action_t( std::string Separators, std::vector<std::pair<std::string const, action_item_t>> Actions );
+// 	parse_action_t( std::initializer_list<std::pair<std::string const, action_item_t>> Actions );
+// 	parse_action_t( std::string Separators, std::initializer_list<std::pair<std::string const, action_item_t>> Actions );
+
+	template<typename Container>
+	parse_action_t( Container Actions ): actions( std::begin( Actions ), std::end( Actions ) ), separators( "\t " ) { }
+//	parse_action_t( std::string Separators, std::initializer_list<std::pair<std::string const, action_item_t>> Actions );
+
 
 	void parse( std::string str ) const;
 };	// struct parse_action_t
