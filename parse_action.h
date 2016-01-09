@@ -28,24 +28,23 @@
 
 
 struct parse_action_t {
-	// bool - tokenize parameters, std::string - help msg, std::function<...> action callback
-//	using action_item_t = std::tuple<bool, std::string, std::function<void( std::vector<std::string> )>>;
 	struct action_item_t {
+		using action_t = std::function<bool( std::vector<std::string> )>;
 		bool tokenize_parameters;
 		std::string help_message;
-		std::function<void( std::vector<std::string> )> action;
+		action_t action;
 		action_item_t( ) = default;
-		action_item_t( bool TokenizeParameters, std::string HelpMessage, std::function<void( std::vector<std::string> )> Action );
+		action_item_t( bool TokenizeParameters, std::string HelpMessage, action_t Action );
 	};
 	
 	std::unordered_map<std::string, action_item_t> actions;
 	std::string separators;
+	std::string last_line;
 
- 	parse_action_t( std::initializer_list<std::pair<std::string, action_item_t>> Actions );
-// 	parse_action_t( std::string Separators, std::initializer_list<std::pair<std::string, action_item_t>> Actions );
+	parse_action_t( std::initializer_list<std::pair<std::string, action_item_t>> Actions );
 
-
-	void parse( std::string str ) const;
+	bool help( ) const;
+	bool parse( std::string str );
 };	// struct parse_action_t
 
-std::pair<std::string, parse_action_t::action_item_t> make_action( std::string key, bool tokenize_parameters, std::string help_message, std::function<void( std::vector<std::string> )> action ); 
+std::pair<std::string, parse_action_t::action_item_t> make_action( std::string key, bool tokenize_parameters, std::string help_message, parse_action_t::action_item_t::action_t action );
