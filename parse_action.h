@@ -39,12 +39,12 @@ struct parse_action_t {
 	
 	std::unordered_map<std::string, action_item_t> actions;
 	std::string separators;
-	std::string last_line;
+	mutable std::string last_line;
 
 	parse_action_t( std::initializer_list<std::pair<std::string, action_item_t>> Actions );
 
 	bool help( ) const;
-	bool parse( std::string str );
+	bool parse( std::string str ) const;
 };	// struct parse_action_t
 
 std::pair<std::string, parse_action_t::action_item_t> make_action( std::string key, bool tokenize_parameters, std::string help_message, parse_action_t::action_item_t::action_t action );

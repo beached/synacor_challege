@@ -54,7 +54,7 @@ bool parse_action_t::help() const {
 	return true;
 }
 
-bool parse_action_t::parse( std::string str ) {
+bool parse_action_t::parse( std::string str ) const {
 	if( "r" == str ) {
 		str = last_line;
 	} else {
