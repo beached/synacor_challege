@@ -41,6 +41,9 @@ std::vector<uint16_t> calc_range( virtual_machine_t const & vm, std::string line
 	return result;
 }
 
+template<typename...T>
+
+
 void console( virtual_machine_t & vm ) {
 
 	parse_action_t const parse_action( { 
@@ -146,7 +149,12 @@ void console( virtual_machine_t & vm ) {
 			"clearmtrap",
 			true,
 			"<address> -> clear memory trap at <address>",
-			[&vm]( auto tokens ) { vm_control::clear_memory_trap( vm, tokens ); return true; } ),			
+			[&vm]( auto tokens ) { vm_control::clear_memory_trap( vm, tokens ); return true; } ),
+		make_action(
+			"setitrap",
+			true,
+			"<INSTRUCTION> -> set a trap before the instruction is called",
+			[&vm]( auto tokens ) { vm_control::set_instruction_trap( vm, tokens ); return true; } ),
 		make_action(
 			"savestate",
 			false,
